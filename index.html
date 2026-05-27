@@ -106,8 +106,8 @@
     }
 
     /* Doc header */
-    .dh { display: grid; grid-template-columns: 210px 1fr 180px; grid-template-rows: auto auto; align-items: start; margin-bottom: 28px; column-gap: 14px; row-gap: 6px; }
-    .dh-company { font-family: Arial, sans-serif; font-size: 14px; font-weight: 700; letter-spacing: .2px; text-transform: uppercase; grid-column: 1; grid-row: 1; }
+    .dh { display: grid; grid-template-columns: max-content 1fr max-content; grid-template-rows: auto auto; align-items: start; margin-bottom: 28px; column-gap: 14px; row-gap: 6px; }
+    .dh-company { font-family: Arial, sans-serif; font-size: 14px; font-weight: 700; letter-spacing: .2px; text-transform: uppercase; white-space: nowrap; grid-column: 1; grid-row: 1; }
     .doc-logo-img { width: 150px; max-height: 110px; object-fit: contain; flex-shrink: 0; grid-column: 1; grid-row: 2; }
     .dh-title { text-align: center; font-size: 30px; font-weight: bold; letter-spacing: 5px; grid-column: 2; grid-row: 1; }
     .dh-qno   { font-size: 15px; font-weight: bold; text-align: right; grid-column: 3; grid-row: 1; }
@@ -142,8 +142,8 @@
     .amt-words { margin: 16px 0 22px; font-size: 14px; }
 
     /* Page 2 */
-    .p2-hdr { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-    .p2-logo-img { height: 68px; width: auto; object-fit: contain; flex-shrink: 0; }
+    .p2-hdr { display: grid; grid-template-columns: max-content 1fr max-content; grid-template-rows: auto auto; align-items: start; margin-bottom: 16px; column-gap: 14px; row-gap: 4px; }
+    .p2-logo-img { height: 68px; width: auto; object-fit: contain; flex-shrink: 0; grid-column: 1; grid-row: 2; }
     .terms-sec { font-size: 14px; line-height: 1.75; margin-bottom: 22px; }
     .terms-sec h3 { font-size: 16px; margin-bottom: 6px; }
     .bank-sec { font-size: 14px; line-height: 1.85; margin-bottom: 24px; }
@@ -507,9 +507,10 @@ function renderPreview() {
       <span class="page-label">PAGE 2</span>
 
       <div class="p2-hdr">
+        <div class="dh-company">Sequenova Solutions Pvt Ltd</div>
+        <div style="text-align:center;font-size:20px;font-weight:bold;letter-spacing:3px;grid-column:2;grid-row:1">QUOTATION</div>
+        <div style="font-size:12px;font-weight:bold;text-align:right;grid-column:3;grid-row:1">${h(qno)}</div>
         <img src="sequenovalogo.jpeg" alt="Sequenova Logo" class="p2-logo-img">
-        <div style="flex:1;text-align:center;font-size:20px;font-weight:bold;letter-spacing:3px">QUOTATION</div>
-        <div style="font-size:12px;font-weight:bold">${h(qno)}</div>
       </div>
 
       <div class="terms-sec">
