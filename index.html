@@ -106,15 +106,17 @@
     }
 
     /* Doc header */
-    .dh { display: grid; grid-template-columns: 170px 1fr 155px; align-items: start; margin-bottom: 13px; column-gap: 10px; }
-    .dh-logo { display: flex; align-items: flex-start; }
-    .doc-logo-img { width: 122px; max-height: 72px; object-fit: contain; flex-shrink: 0; }
+    .dh { display: grid; grid-template-columns: 170px 1fr 155px; align-items: start; margin-bottom: 22px; column-gap: 10px; }
+    .dh-logo { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+    .dh-company { font-family: Arial, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: .2px; text-transform: uppercase; }
+    .doc-logo-img { width: 122px; max-height: 86px; object-fit: contain; flex-shrink: 0; }
+    .dh-main { min-width: 0; }
     .dh-title { flex: 1; text-align: center; font-size: 23px; font-weight: bold; letter-spacing: 4px; }
     .dh-qno   { font-size: 12.5px; font-weight: bold; min-width: 155px; text-align: right; }
 
     /* Seller info box */
-    .seller-box { border: 1.5px solid #222; padding: 9px 12px; margin-bottom: 12px; font-size: 10.5px; line-height: 1.55; }
-    .seller-name { font-size: 12px; font-weight: bold; margin-bottom: 5px; }
+    .seller-box { width: 365px; margin: 9px 0 0 auto; font-size: 12px; line-height: 1.35; text-align: left; }
+    .seller-name { font-size: 13px; font-weight: bold; margin-bottom: 2px; }
     .info-line {
       display: grid; grid-template-columns: max-content 1fr; column-gap: 4px;
       align-items: start; margin: 2px 0;
@@ -411,24 +413,24 @@ function renderPreview() {
 
       <div class="dh">
         <div class="dh-logo">
+          <div class="dh-company">Sequenova Solutions Pvt Ltd</div>
           <img src="sequenovalogo.jpeg" alt="Sequenova Logo" class="doc-logo-img">
         </div>
-        <div class="dh-title">QUOTATION</div>
+        <div class="dh-main">
+          <div class="dh-title">QUOTATION</div>
+          <div class="seller-box">
+            <div class="seller-name">Sequenova Solutions Private Limited</div>
+            <div class="info-line">
+              <strong>Address:-</strong>
+              <span>108, 1st Floor, Blue Skky Icon, opposite Parvatibai Genba Moze College of Engineering, Baif Road, Sambhaji Nagar, Wagholi, Pune - 412207, Maharashtra, India.</span>
+            </div>
+            <div class="info-line"><strong>Attention :</strong><span>Ms. Vishakha Gayke</span></div>
+            <div class="info-line"><strong>Email:</strong><span>vishakha.gayke@sequenovasolutions.com</span></div>
+            <div class="info-line"><strong>GST -</strong><span>27ABNCS3437J1ZV</span></div>
+            <div class="info-line"><strong>CIN -</strong><span>U21001PN2024PTC230531</span></div>
+          </div>
+        </div>
         <div class="dh-qno">${h(qno)}</div>
-      </div>
-
-      <div class="seller-box">
-        <div class="seller-name">Sequenova Solutions Private Limited</div>
-        <div class="info-line">
-          <strong>Address:</strong>
-          <span>108, 1st Floor, Blue Skky Icon, opposite Parvatibai Genba Moze College of Engineering, Baif Road, Sambhaji Nagar, Wagholi, Pune - 412207, Maharashtra, India.</span>
-        </div>
-        <div class="info-line"><strong>Attention:</strong><span>Ms. Vishakha Gayke</span></div>
-        <div class="info-line"><strong>Email:</strong><span>vishakha.gayke@sequenovasolutions.com</span></div>
-        <div class="info-inline">
-          <span><strong>GST</strong> - 27ABNCS3437J1ZV</span>
-          <span><strong>CIN</strong> - U21001PN2024PTC230531</span>
-        </div>
       </div>
 
       <table class="addr-tbl">
