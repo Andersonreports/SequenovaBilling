@@ -118,18 +118,17 @@
     .seller-box { width: 365px; margin: 9px 0 0 auto; font-size: 12px; line-height: 1.35; text-align: left; }
     .seller-name { font-size: 13px; font-weight: bold; margin-bottom: 2px; }
     .info-line {
-      display: grid; grid-template-columns: max-content 1fr; column-gap: 4px;
-      align-items: start; margin: 2px 0;
+      display: block; margin: 2px 0;
     }
-    .info-line strong { white-space: nowrap; }
-    .info-line span { min-width: 0; overflow-wrap: anywhere; }
+    .info-line strong { margin-right: 3px; white-space: nowrap; }
+    .info-line span { overflow-wrap: anywhere; }
     .info-inline { display: flex; flex-wrap: wrap; gap: 22px; margin-top: 2px; }
 
     /* Address table */
-    .addr-tbl { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+    .addr-tbl { width: 100%; border-collapse: collapse; margin-bottom: 12px; table-layout: fixed; }
     .addr-tbl th { border: 1.5px solid #222; padding: 5px 9px; background: #f2f2f2; font-size: 12px; font-weight: bold; text-align: center; }
     .addr-tbl td { border: 1.5px solid #222; padding: 8px 10px; vertical-align: top; font-size: 10.5px; line-height: 1.65; }
-    .addr-tbl .date-cell { vertical-align: middle; font-size: 10.5px; line-height: 2.1; }
+    .addr-tbl .date-cell { vertical-align: middle; text-align: center; font-size: 10.5px; line-height: 2.1; }
 
     /* Items table */
     .it { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 10px; }
@@ -438,10 +437,7 @@ function renderPreview() {
           <tr>
             <th style="width:37%">Bill To</th>
             <th style="width:37%">Ship To</th>
-            <td rowspan="2" class="date-cell" style="width:26%;border:1.5px solid #222;padding:9px 11px;vertical-align:middle">
-              <strong>Quotation Date:</strong> ${fmtD(qdate)}<br>
-              <strong>Quotation No:</strong> ${h(qno)}
-            </td>
+            <th style="width:26%"></th>
           </tr>
         </thead>
         <tbody>
@@ -455,6 +451,10 @@ function renderPreview() {
               <div class="info-line"><strong>Email:</strong><span>pd@andersondiagnostics.com</span></div>
             </td>
             <td>${shipBlock}</td>
+            <td class="date-cell">
+              <strong>Quotation Date:</strong> ${fmtD(qdate)}<br>
+              <strong>Quotation No:</strong> ${h(qno)}
+            </td>
           </tr>
         </tbody>
       </table>
