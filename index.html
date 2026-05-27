@@ -94,8 +94,8 @@
     .quote-doc { display: flex; flex-direction: column; align-items: center; width: 100%; }
     .quote-page {
       background: white; width: calc(100% - 32px); min-width: 794px; min-height: 1123px;
-      padding: 26px 30px 34px;
-      font-family: 'Times New Roman', Times, serif; font-size: 11px; line-height: 1.4;
+      padding: 34px 38px 42px;
+      font-family: 'Times New Roman', Times, serif; font-size: 14px; line-height: 1.45;
       box-shadow: 0 4px 28px rgba(0,0,0,0.18); color: #111;
       margin-bottom: 22px; position: relative;
     }
@@ -106,17 +106,17 @@
     }
 
     /* Doc header */
-    .dh { display: grid; grid-template-columns: 170px 1fr 155px; align-items: start; margin-bottom: 22px; column-gap: 10px; }
+    .dh { display: grid; grid-template-columns: 210px 1fr 180px; align-items: start; margin-bottom: 28px; column-gap: 14px; }
     .dh-logo { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
-    .dh-company { font-family: Arial, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: .2px; text-transform: uppercase; }
-    .doc-logo-img { width: 122px; max-height: 86px; object-fit: contain; flex-shrink: 0; }
+    .dh-company { font-family: Arial, sans-serif; font-size: 14px; font-weight: 700; letter-spacing: .2px; text-transform: uppercase; }
+    .doc-logo-img { width: 150px; max-height: 110px; object-fit: contain; flex-shrink: 0; }
     .dh-main { grid-column: 2 / 4; min-width: 0; }
-    .dh-title { flex: 1; text-align: center; font-size: 23px; font-weight: bold; letter-spacing: 4px; }
-    .dh-qno   { font-size: 12.5px; font-weight: bold; min-width: 155px; text-align: right; }
+    .dh-title { flex: 1; text-align: center; font-size: 30px; font-weight: bold; letter-spacing: 5px; }
+    .dh-qno   { font-size: 15px; font-weight: bold; min-width: 180px; text-align: right; }
 
     /* Seller info box */
-    .seller-box { width: 365px; margin: 9px 34px 0 auto; font-size: 12px; line-height: 1.35; text-align: left; }
-    .seller-name { font-size: 13px; font-weight: bold; margin-bottom: 2px; }
+    .seller-box { width: 500px; margin: 12px 34px 0 auto; font-size: 15px; line-height: 1.35; text-align: left; }
+    .seller-name { font-size: 16px; font-weight: bold; margin-bottom: 2px; }
     .info-line {
       display: block; margin: 2px 0;
     }
@@ -126,32 +126,32 @@
 
     /* Address table */
     .addr-tbl { width: 100%; border-collapse: collapse; margin-bottom: 12px; table-layout: fixed; }
-    .addr-tbl th { border: 1.5px solid #222; padding: 5px 9px; background: #f2f2f2; font-size: 12px; font-weight: bold; text-align: center; }
-    .addr-tbl td { border: 1.5px solid #222; padding: 8px 10px; vertical-align: top; font-size: 10.5px; line-height: 1.65; }
-    .addr-tbl .date-cell { vertical-align: middle; text-align: center; font-size: 10.5px; line-height: 2.1; }
+    .addr-tbl th { border: 1.5px solid #222; padding: 6px 10px; background: #f2f2f2; font-size: 16px; font-weight: bold; text-align: center; }
+    .addr-tbl td { border: 1.5px solid #222; padding: 12px 12px; vertical-align: top; font-size: 14px; line-height: 1.55; }
+    .addr-tbl .date-cell { vertical-align: middle; text-align: center; font-size: 14px; line-height: 2; }
 
     /* Items table */
-    .it { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 10px; }
-    .it th, .it td { border: 1.5px solid #222; padding: 5px 5px; text-align: center; }
+    .it { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 13px; }
+    .it th, .it td { border: 1.5px solid #222; padding: 8px 7px; text-align: center; }
     .it th { background: #f0f0f0; font-weight: bold; }
     .it .item-row td { background: #fde4c5; }
     .it .sub-row td  { background: #dce8f8; font-weight: bold; }
-    .it .tot-row td  { background: #ffeb3b; font-weight: bold; font-size: 11.5px; }
+    .it .tot-row td  { background: #ffeb3b; font-weight: bold; font-size: 15px; }
     .it td.left      { text-align: left; }
     .ph { color: #bbb; font-style: italic; }
 
     /* Amount in words */
-    .amt-words { margin: 12px 0 18px; font-size: 11px; }
+    .amt-words { margin: 16px 0 22px; font-size: 14px; }
 
     /* Page 2 */
     .p2-hdr { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-    .p2-logo-img { height: 52px; width: auto; object-fit: contain; flex-shrink: 0; }
-    .terms-sec { font-size: 10.5px; line-height: 1.75; margin-bottom: 18px; }
-    .terms-sec h3 { font-size: 12px; margin-bottom: 5px; }
-    .bank-sec { font-size: 10.5px; line-height: 1.85; margin-bottom: 20px; }
-    .bank-sec h3 { font-size: 12px; margin-bottom: 5px; }
-    .sig { text-align: right; margin-top: 36px; font-size: 11px; line-height: 1.9; }
-    .ty  { text-align: center; margin-top: 50px; font-size: 20px; color: #bbb; font-style: italic; }
+    .p2-logo-img { height: 68px; width: auto; object-fit: contain; flex-shrink: 0; }
+    .terms-sec { font-size: 14px; line-height: 1.75; margin-bottom: 22px; }
+    .terms-sec h3 { font-size: 16px; margin-bottom: 6px; }
+    .bank-sec { font-size: 14px; line-height: 1.85; margin-bottom: 24px; }
+    .bank-sec h3 { font-size: 16px; margin-bottom: 6px; }
+    .sig { text-align: right; margin-top: 42px; font-size: 14px; line-height: 1.9; }
+    .ty  { text-align: center; margin-top: 58px; font-size: 25px; color: #bbb; font-style: italic; }
 
     /* ── Print ── */
     @media print {
