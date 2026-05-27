@@ -106,16 +106,14 @@
     }
 
     /* Doc header */
-    .dh { display: grid; grid-template-columns: 210px 1fr 180px; align-items: start; margin-bottom: 28px; column-gap: 14px; }
-    .dh-logo { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
-    .dh-company { font-family: Arial, sans-serif; font-size: 14px; font-weight: 700; letter-spacing: .2px; text-transform: uppercase; }
-    .doc-logo-img { width: 150px; max-height: 110px; object-fit: contain; flex-shrink: 0; }
-    .dh-main { grid-column: 2 / 4; min-width: 0; }
-    .dh-title { flex: 1; text-align: center; font-size: 30px; font-weight: bold; letter-spacing: 5px; }
-    .dh-qno   { font-size: 15px; font-weight: bold; min-width: 180px; text-align: right; }
+    .dh { display: grid; grid-template-columns: 210px 1fr 180px; grid-template-rows: auto auto; align-items: start; margin-bottom: 28px; column-gap: 14px; row-gap: 6px; }
+    .dh-company { font-family: Arial, sans-serif; font-size: 14px; font-weight: 700; letter-spacing: .2px; text-transform: uppercase; grid-column: 1; grid-row: 1; }
+    .doc-logo-img { width: 150px; max-height: 110px; object-fit: contain; flex-shrink: 0; grid-column: 1; grid-row: 2; }
+    .dh-title { text-align: center; font-size: 30px; font-weight: bold; letter-spacing: 5px; grid-column: 2; grid-row: 1; }
+    .dh-qno   { font-size: 15px; font-weight: bold; text-align: right; grid-column: 3; grid-row: 1; }
 
     /* Seller info box */
-    .seller-box { width: 500px; margin: 12px 34px 0 auto; font-size: 15px; line-height: 1.35; text-align: left; }
+    .seller-box { grid-column: 2 / 4; grid-row: 2; margin: 0; font-size: 15px; line-height: 1.35; text-align: left; }
     .seller-name { font-size: 16px; font-weight: bold; margin-bottom: 2px; }
     .info-line {
       display: block; margin: 2px 0;
@@ -411,25 +409,21 @@ function renderPreview() {
       <span class="page-label">PAGE 1</span>
 
       <div class="dh">
-        <div class="dh-logo">
-          <div class="dh-company">Sequenova Solutions Pvt Ltd</div>
-          <img src="sequenovalogo.jpeg" alt="Sequenova Logo" class="doc-logo-img">
-        </div>
-        <div class="dh-main">
-          <div class="dh-title">QUOTATION</div>
-          <div class="seller-box">
-            <div class="seller-name">Sequenova Solutions Private Limited</div>
-            <div class="info-line">
-              <strong>Address:-</strong>
-              <span>108, 1st Floor, Blue Skky Icon, opposite Parvatibai Genba Moze College of Engineering, Baif Road, Sambhaji Nagar, Wagholi, Pune - 412207, Maharashtra, India.</span>
-            </div>
-            <div class="info-line"><strong>Attention :</strong><span>Ms. Vishakha Gayke</span></div>
-            <div class="info-line"><strong>Email:</strong><span>vishakha.gayke@sequenovasolutions.com</span></div>
-            <div class="info-line"><strong>GST -</strong><span>27ABNCS3437J1ZV</span></div>
-            <div class="info-line"><strong>CIN -</strong><span>U21001PN2024PTC230531</span></div>
-          </div>
-        </div>
+        <div class="dh-company">Sequenova Solutions Pvt Ltd</div>
+        <div class="dh-title">QUOTATION</div>
         <div class="dh-qno">${h(qno)}</div>
+        <img src="sequenovalogo.jpeg" alt="Sequenova Logo" class="doc-logo-img">
+        <div class="seller-box">
+          <div class="seller-name">Sequenova Solutions Private Limited</div>
+          <div class="info-line">
+            <strong>Address:-</strong>
+            <span>108, 1st Floor, Blue Skky Icon, opposite Parvatibai Genba Moze College of Engineering, Baif Road, Sambhaji Nagar, Wagholi, Pune - 412207, Maharashtra, India.</span>
+          </div>
+          <div class="info-line"><strong>Attention :</strong><span>Ms. Vishakha Gayke</span></div>
+          <div class="info-line"><strong>Email:</strong><span>vishakha.gayke@sequenovasolutions.com</span></div>
+          <div class="info-line"><strong>GST -</strong><span>27ABNCS3437J1ZV</span></div>
+          <div class="info-line"><strong>CIN -</strong><span>U21001PN2024PTC230531</span></div>
+        </div>
       </div>
 
       <table class="addr-tbl">
