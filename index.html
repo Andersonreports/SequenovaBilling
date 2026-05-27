@@ -590,13 +590,13 @@ function downloadPDF() {
   clonePages.forEach((p, i) => {
     p.style.width = '794px';
     p.style.minWidth = '794px';
+    p.style.minHeight = 'auto';
     p.style.margin = '0';
     p.style.boxShadow = 'none';
     if (i < clonePages.length - 1) {
       p.style.pageBreakAfter = 'always';
       p.style.breakAfter = 'page';
     } else {
-      p.style.minHeight = 'auto';
       p.style.pageBreakAfter = 'avoid';
       p.style.breakAfter = 'avoid';
     }
