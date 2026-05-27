@@ -95,7 +95,7 @@
     .quote-page {
       background: white; width: 794px; min-height: 1123px;
       padding: 26px 30px 34px;
-      font-family: 'Times New Roman', Times, serif; font-size: 11px; line-height: 1.4;
+      font-family: 'Times New Roman', Times, serif; font-size: 14px; line-height: 1.35;
       box-shadow: 0 4px 28px rgba(0,0,0,0.18); color: #111;
       margin-bottom: 22px; position: relative;
     }
@@ -106,17 +106,17 @@
     }
 
     /* Doc header */
-    .dh { display: grid; grid-template-columns: 170px 1fr 155px; align-items: start; margin-bottom: 22px; column-gap: 10px; }
+    .dh { display: grid; grid-template-columns: 210px 1fr 155px; align-items: start; margin-bottom: 22px; column-gap: 10px; position: relative; min-height: 235px; }
     .dh-logo { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
-    .dh-company { font-family: Arial, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: .2px; text-transform: uppercase; }
-    .doc-logo-img { width: 122px; max-height: 86px; object-fit: contain; flex-shrink: 0; }
-    .dh-main { min-width: 0; }
-    .dh-title { flex: 1; text-align: center; font-size: 23px; font-weight: bold; letter-spacing: 4px; }
-    .dh-qno   { font-size: 12.5px; font-weight: bold; min-width: 155px; text-align: right; }
+    .dh-company { font-family: Arial, sans-serif; font-size: 14px; font-weight: 700; line-height: 1.15; text-transform: uppercase; }
+    .doc-logo-img { width: 118px; max-height: 118px; margin-left: 36px; object-fit: contain; flex-shrink: 0; }
+    .dh-main { grid-column: 2 / 4; min-width: 0; padding-top: 38px; }
+    .dh-title { position: absolute; top: 3px; left: 50%; transform: translateX(-50%); text-align: center; font-family: Arial, sans-serif; font-size: 23px; font-weight: 700; letter-spacing: 0; }
+    .dh-qno   { grid-column: 3; grid-row: 1; font-family: Arial, sans-serif; font-size: 14px; font-weight: 700; min-width: 155px; text-align: right; padding-top: 4px; }
 
     /* Seller info box */
-    .seller-box { width: 365px; margin: 9px 0 0 auto; font-size: 12px; line-height: 1.35; text-align: left; }
-    .seller-name { font-size: 13px; font-weight: bold; margin-bottom: 2px; }
+    .seller-box { width: 360px; margin: 0 0 0 auto; font-size: 16px; line-height: 1.35; text-align: left; }
+    .seller-name { font-size: 16px; font-weight: bold; margin-bottom: 1px; }
     .info-line {
       display: grid; grid-template-columns: max-content 1fr; column-gap: 4px;
       align-items: start; margin: 2px 0;
@@ -126,13 +126,13 @@
     .info-inline { display: flex; flex-wrap: wrap; gap: 22px; margin-top: 2px; }
 
     /* Address table */
-    .addr-tbl { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
-    .addr-tbl th { border: 1.5px solid #222; padding: 5px 9px; background: #f2f2f2; font-size: 12px; font-weight: bold; text-align: center; }
-    .addr-tbl td { border: 1.5px solid #222; padding: 8px 10px; vertical-align: top; font-size: 10.5px; line-height: 1.65; }
-    .addr-tbl .date-cell { vertical-align: middle; font-size: 10.5px; line-height: 2.1; }
+    .addr-tbl { width: 100%; border-collapse: collapse; margin-bottom: 12px; table-layout: fixed; }
+    .addr-tbl th { border: 1.5px solid #222; padding: 2px 8px; background: white; font-size: 18px; line-height: 1.05; font-weight: bold; text-align: center; }
+    .addr-tbl td { border: 1.5px solid #222; padding: 8px 4px; vertical-align: top; font-size: 17px; line-height: 1.28; }
+    .addr-tbl .date-cell { vertical-align: middle; text-align: center; font-size: 16px; line-height: 1.45; padding: 8px; }
 
     /* Items table */
-    .it { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 10px; }
+    .it { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 12px; }
     .it th, .it td { border: 1.5px solid #222; padding: 5px 5px; text-align: center; }
     .it th { background: #f0f0f0; font-weight: bold; }
     .it .item-row td { background: #fde4c5; }
@@ -421,13 +421,13 @@ function renderPreview() {
           <div class="seller-box">
             <div class="seller-name">Sequenova Solutions Private Limited</div>
             <div class="info-line">
-              <strong>Address:-</strong>
+              <strong>Address: -</strong>
               <span>108, 1st Floor, Blue Skky Icon, opposite Parvatibai Genba Moze College of Engineering, Baif Road, Sambhaji Nagar, Wagholi, Pune - 412207, Maharashtra, India.</span>
             </div>
             <div class="info-line"><strong>Attention :</strong><span>Ms. Vishakha Gayke</span></div>
             <div class="info-line"><strong>Email:</strong><span>vishakha.gayke@sequenovasolutions.com</span></div>
-            <div class="info-line"><strong>GST -</strong><span>27ABNCS3437J1ZV</span></div>
-            <div class="info-line"><strong>CIN -</strong><span>U21001PN2024PTC230531</span></div>
+            <div><strong>GST</strong> - 27ABNCS3437J1ZV</div>
+            <div><strong>CIN</strong> - U21001PN2024PTC230531</div>
           </div>
         </div>
         <div class="dh-qno">${h(qno)}</div>
@@ -438,10 +438,7 @@ function renderPreview() {
           <tr>
             <th style="width:37%">Bill To</th>
             <th style="width:37%">Ship To</th>
-            <td rowspan="2" class="date-cell" style="width:26%;border:1.5px solid #222;padding:9px 11px;vertical-align:middle">
-              <strong>Quotation Date:</strong> ${fmtD(qdate)}<br>
-              <strong>Quotation No:</strong> ${h(qno)}
-            </td>
+            <th style="width:26%"></th>
           </tr>
         </thead>
         <tbody>
@@ -455,6 +452,10 @@ function renderPreview() {
               <div class="info-line"><strong>Email:</strong><span>pd@andersondiagnostics.com</span></div>
             </td>
             <td>${shipBlock}</td>
+            <td class="date-cell">
+              <strong>Quotation Date:</strong> ${fmtD(qdate)}<br>
+              <strong>Quotation No:</strong> ${h(qno)}
+            </td>
           </tr>
         </tbody>
       </table>
