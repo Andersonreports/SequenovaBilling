@@ -16,11 +16,10 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.28); flex-shrink: 0;
     }
     .hdr-left { display: flex; align-items: center; gap: 13px; }
-    .hdr-badge {
-      width: 38px; height: 38px; border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.45); background: rgba(255,255,255,0.12);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 8px; font-weight: 800; line-height: 1.2; text-align: center;
+    .hdr-logo-img {
+      width: 46px; height: 46px; object-fit: contain;
+      background: white; border-radius: 6px; padding: 3px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.18);
     }
     .app-header h1 { font-size: 1.08rem; font-weight: 700; }
     .app-header p  { font-size: 0.7rem; opacity: 0.65; margin-top: 1px; }
@@ -92,8 +91,9 @@
     }
 
     /* ════ QUOTATION PAGES ════ */
+    .quote-doc { display: flex; flex-direction: column; align-items: center; }
     .quote-page {
-      background: white; width: 800px; min-height: 1123px;
+      background: white; width: 794px; min-height: 1123px;
       padding: 26px 30px 34px;
       font-family: 'Times New Roman', Times, serif; font-size: 11px; line-height: 1.4;
       box-shadow: 0 4px 28px rgba(0,0,0,0.18); color: #111;
@@ -106,14 +106,22 @@
     }
 
     /* Doc header */
-    .dh { display: flex; align-items: center; margin-bottom: 13px; }
-    .dh-logo { display: flex; align-items: center; gap: 12px; flex: 1; }
-    .doc-logo-img { height: 72px; width: auto; object-fit: contain; flex-shrink: 0; }
+    .dh { display: grid; grid-template-columns: 170px 1fr 155px; align-items: start; margin-bottom: 13px; column-gap: 10px; }
+    .dh-logo { display: flex; align-items: flex-start; }
+    .doc-logo-img { width: 122px; max-height: 72px; object-fit: contain; flex-shrink: 0; }
     .dh-title { flex: 1; text-align: center; font-size: 23px; font-weight: bold; letter-spacing: 4px; }
     .dh-qno   { font-size: 12.5px; font-weight: bold; min-width: 155px; text-align: right; }
 
     /* Seller info box */
-    .seller-box { border: 1.5px solid #222; padding: 9px 12px; margin-bottom: 12px; font-size: 10.5px; line-height: 1.75; }
+    .seller-box { border: 1.5px solid #222; padding: 9px 12px; margin-bottom: 12px; font-size: 10.5px; line-height: 1.55; }
+    .seller-name { font-size: 12px; font-weight: bold; margin-bottom: 5px; }
+    .info-line {
+      display: grid; grid-template-columns: max-content 1fr; column-gap: 4px;
+      align-items: start; margin: 2px 0;
+    }
+    .info-line strong { white-space: nowrap; }
+    .info-line span { min-width: 0; overflow-wrap: anywhere; }
+    .info-inline { display: flex; flex-wrap: wrap; gap: 22px; margin-top: 2px; }
 
     /* Address table */
     .addr-tbl { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
@@ -150,10 +158,11 @@
       body { background: white; height: auto; overflow: visible; }
       .main { display: block; overflow: visible; }
       .preview-panel { padding: 0; background: white; display: block; flex-direction: unset; align-items: unset; }
-      .quote-page { box-shadow: none; width: 100%; padding: 18px 22px; margin-bottom: 0; min-height: unset; page-break-after: always; }
-      .quote-page:last-child { page-break-after: avoid; }
+      .quote-doc { display: block; }
+      .quote-page { box-shadow: none; width: 100%; min-height: calc(297mm - 2cm); padding: 18px 22px; margin-bottom: 0; break-after: page; page-break-after: always; }
+      .quote-page:last-child { break-after: auto; page-break-after: avoid; }
     }
-    @page { margin: 1cm; }
+    @page { size: A4; margin: 1cm; }
   </style>
 </head>
 <body>
@@ -161,7 +170,7 @@
 <!-- ── HEADER ── -->
 <div class="app-header">
   <div class="hdr-left">
-    <div class="hdr-badge">SQ<br>SOL</div>
+    <img src="sequenovalogo.jpeg" alt="Sequenova Logo" class="hdr-logo-img">
     <div>
       <h1>Sequenova Bill</h1>
       <p>Sequenova Solutions Pvt. Ltd. &nbsp;·&nbsp; Internal Quotation Generator</p>
@@ -356,10 +365,10 @@ function renderPreview() {
   const shipParts = [
     sn  && `<strong>${h(sn)}</strong>`,
     si  && `<strong>${h(si)}</strong>`,
-    sa  && `<strong>Address:</strong> ${h(sa)}`,
-    sat && `<strong>Attention:</strong> ${h(sat)}`,
-    sp  && `<strong>Phone Number:</strong> ${h(sp)}`,
-    se  && `<strong>Email:</strong> ${h(se)}`,
+    sa  && `<div class="info-line"><strong>Address:</strong><span>${h(sa)}</span></div>`,
+    sat && `<div class="info-line"><strong>Attention:</strong><span>${h(sat)}</span></div>`,
+    sp  && `<div class="info-line"><strong>Phone Number:</strong><span>${h(sp)}</span></div>`,
+    se  && `<div class="info-line"><strong>Email:</strong><span>${h(se)}</span></div>`,
   ].filter(Boolean);
   const shipBlock = shipParts.length
     ? shipParts.join('<br>')
@@ -409,12 +418,17 @@ function renderPreview() {
       </div>
 
       <div class="seller-box">
-        <strong style="font-size:12px">Sequenova Solutions Private Limited</strong><br>
-        <strong>Address:</strong> - 108, 1st Floor, Blue Skky Icon, opposite Parvatibai Genba Moze College of Engineering,
-        Baif Road, Sambhaji Nagar, Wagholi, Pune - 412207, Maharashtra, India.<br>
-        <strong>Attention :</strong> Ms. Vishakha Gayke<br>
-        <strong>Email:</strong> vishakha.gayke@sequenovasolutions.com<br>
-        <strong>GST</strong> - 27ABNCS3437J1ZV &emsp; <strong>CIN</strong> - U21001PN2024PTC230531
+        <div class="seller-name">Sequenova Solutions Private Limited</div>
+        <div class="info-line">
+          <strong>Address:</strong>
+          <span>108, 1st Floor, Blue Skky Icon, opposite Parvatibai Genba Moze College of Engineering, Baif Road, Sambhaji Nagar, Wagholi, Pune - 412207, Maharashtra, India.</span>
+        </div>
+        <div class="info-line"><strong>Attention:</strong><span>Ms. Vishakha Gayke</span></div>
+        <div class="info-line"><strong>Email:</strong><span>vishakha.gayke@sequenovasolutions.com</span></div>
+        <div class="info-inline">
+          <span><strong>GST</strong> - 27ABNCS3437J1ZV</span>
+          <span><strong>CIN</strong> - U21001PN2024PTC230531</span>
+        </div>
       </div>
 
       <table class="addr-tbl">
@@ -432,12 +446,11 @@ function renderPreview() {
           <tr>
             <td>
               <strong>Anderson Diagnostics Services Pvt. Ltd.</strong><br>
-              <strong>Address:</strong> -No. 150, Poonamallee High Road,<br>
-              (Opp.to Dasaprakash Hotel), Chennai- 600 084, Tamil Nadu, India.<br>
-              <strong>GSTIN</strong> - 33AAKCA0333K1ZY<br>
-              <strong>Attention:</strong> Mrs. M. Vinithra<br>
-              <strong>Phone Number:</strong> +91 9176677722<br>
-              <strong>Email:</strong> pd@andersondiagnostics.com
+              <div class="info-line"><strong>Address:</strong><span>No. 150, Poonamallee High Road,<br>(Opp. to Dasaprakash Hotel), Chennai - 600 084, Tamil Nadu, India.</span></div>
+              <div class="info-line"><strong>GSTIN:</strong><span>33AAKCA0333K1ZY</span></div>
+              <div class="info-line"><strong>Attention:</strong><span>Mrs. M. Vinithra</span></div>
+              <div class="info-line"><strong>Phone Number:</strong><span>+91 9176677722</span></div>
+              <div class="info-line"><strong>Email:</strong><span>pd@andersondiagnostics.com</span></div>
             </td>
             <td>${shipBlock}</td>
           </tr>
