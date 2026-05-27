@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sequenova Bill</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #edf2f7; color: #2d3748; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* ── App header ── */
+    .app-header {
+      background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+      color: white; padding: 10px 22px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.28); flex-shrink: 0;
+    }
+    .hdr-left { display: flex; align-items: center; gap: 13px; }
+    .hdr-badge {
+      width: 38px; height: 38px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.45); background: rgba(255,255,255,0.12);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 8.5px; font-weight: 800; line-height: 1.2; text-align: center;
+    }
+    .app-header h1 { font-size: 1.08rem; font-weight: 700; letter-spacing: 0.3px; }
+    .app-header p  { font-size: 0.7rem; opacity: 0.65; margin-top: 1px; }
+    .btn-print {
+      background: #2e7d32; color: white; border: none;
+      padding: 8px 18px; border-radius: 7px; cursor: pointer;
+      font-size: 0.81rem; font-weight: 600;
+      display: flex; align-items: center; gap: 6px; transition: background .18s;
+    }
+    .btn-print:hover { background: #1b5e20; }
+    .btn-print svg { flex-shrink: 0; }
+
+    /* ── Main layout ── */
+    .main { display: flex; flex: 1; overflow: hidden; }
+
+    /* ── Form / Left panel ── */
+    .form-panel {
+      width: 340px; min-width: 280px; background: white;
+      overflow-y: auto; padding: 16px 15px;
+      border-right: 1px solid #e2e8f0; flex-shrink: 0;
+    }
+    .sec-title {
+      color: #c84b00; font-size: 0.67rem; font-weight: 700;
+      letter-spacing: 1.2px; text-transform: uppercase;
+      margin: 18px 0 9px; padding-bottom: 4px; border-bottom: 1px solid #fbd38d;
+    }
+    .sec-title:first-child { margin-top: 2px; }
+    .fg { margin-bottom: 9px; }
+    .fg label { display: block; font-size: 0.73rem; color: #4a5568; font-weight: 500; margin-bottom: 3px; }
+    .fg input, .fg textarea {
+      width: 100%; border: 1px solid #cbd5e0; border-radius: 5px;
+      padding: 6px 9px; font-size: 0.78rem; color: #2d3748; background: white;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .fg input:focus, .fg textarea:focus {
+      outline: none; border-color: #4299e1; box-shadow: 0 0 0 2px rgba(66,153,225,.2);
+    }
+    .fg textarea { resize: vertical; min-height: 56px; font-family: inherit; }
+    .frow { display: flex; gap: 8px; }
+    .frow .fg { flex: 1; }
+
+    /* Bill To fixed block */
+    .bill-fixed {
+      background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px;
+      padding: 10px 12px; font-size: 0.73rem; line-height: 1.7; color: #4a5568;
+    }
+    .bill-fixed strong { color: #1a202c; }
+    .badge-fixed {
+      display: inline-block; background: #e2e8f0; color: #718096;
+      font-size: 0.6rem; font-weight: 700; padding: 1px 5px; border-radius: 3px;
+      letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 5px;
+    }
+
+    /* Add item button */
+    .btn-add-item {
+      width: 100%; background: #1a237e; color: white; border: none;
+      padding: 8px 0; border-radius: 6px; cursor: pointer;
+      font-size: 0.8rem; font-weight: 600; margin-top: 6px;
+      transition: background .18s;
+    }
+    .btn-add-item:hover { background: #283593; }
+
+    /* ── Preview panel ── */
+    .preview-panel {
+      flex: 1; overflow-y: auto; background: #d1d9e0;
+      padding: 22px; display: flex; justify-content: center; align-items: flex-start;
+    }
+
+    /* ════════════════ QUOTATION DOCUMENT ════════════════ */
+    .quote-doc {
+      background: white; width: 800px; min-height: 1060px;
+      padding: 26px 30px 34px;
+      font-family: 'Times New Roman', Times, serif; font-size: 11px; line-height: 1.4;
+      box-shadow: 0 4px 28px rgba(0,0,0,0.18); color: #111;
+    }
+
+    /* Doc header row */
+    .dh { display: flex; align-items: center; margin-bottom: 13px; }
+    .dh-logo { display: flex; align-items: center; gap: 10px; flex: 1; }
+    .logo-circle {
+      width: 68px; height: 68px; border-radius: 50%;
+      border: 3px solid #1a237e; background: #e8eaf6;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; flex-shrink: 0;
+    }
+    .logo-circle span { font-family: sans-serif; font-weight: 900; color: #1a237e; font-size: 8px; line-height: 1.3; letter-spacing: 0.3px; }
+    .logo-circle small { font-family: sans-serif; color: #3949ab; font-size: 5.5px; font-weight: 600; letter-spacing: 0.6px; }
+    .co-name { font-size: 14px; font-weight: bold; color: #1a237e; line-height: 1.3; }
+    .co-sub  { font-size: 9.5px; color: #555; }
+    .dh-title { flex: 1; text-align: center; font-size: 23px; font-weight: bold; letter-spacing: 4px; }
+    .dh-qno   { font-size: 12.5px; font-weight: bold; min-width: 155px; text-align: right; }
+
+    /* Seller box */
+    .seller-box { border: 1.5px solid #222; padding: 9px 12px; margin-bottom: 12px; font-size: 10.5px; line-height: 1.65; }
+
+    /* Bill To / Ship To table */
+    .addr-tbl { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+    .addr-tbl th { border: 1.5px solid #222; padding: 5px 9px; background: #f2f2f2; font-size: 12px; font-weight: bold; text-align: center; }
+    .addr-tbl td { border: 1.5px solid #222; padding: 8px 10px; vertical-align: top; font-size: 10.5px; line-height: 1.65; }
+    .addr-tbl .date-cell { vertical-align: middle; font-size: 10.5px; line-height: 2.1; }
+
+    /* Items table */
+    .it { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 10px; }
+    .it th, .it td { border: 1.5px solid #222; padding: 4px 4px; text-align: center; }
+    .it th { background: #f0f0f0; font-weight: bold; }
+    .it .item-row td { background: #fde4c5; }
+    .it .sub-row td  { background: #dce8f8; font-weight: bold; }
+    .it .tp-row td   { }
+    .it .tg-row td   { }
+    .it .tot-row td  { background: #ffeb3b; font-weight: bold; font-size: 11.5px; }
+    .it td.tleft     { text-align: left; }
+    .it td.del-col   { width: 22px; padding: 0; border-color: transparent; background: transparent !important; }
+
+    /* Inline cell inputs */
+    .ci {
+      width: 100%; border: none; background: transparent; outline: none;
+      font-family: 'Times New Roman', Times, serif; font-size: 10px;
+      text-align: center; color: #111; padding: 1px 2px;
+    }
+    .ci:focus { background: rgba(255,255,255,0.75); border-radius: 2px; }
+    .ci.left  { text-align: left; }
+    .ci.num   { text-align: right; }
+
+    /* Delete row button */
+    .btn-del {
+      display: block; width: 18px; height: 18px; line-height: 18px; text-align: center;
+      background: #e53e3e; color: white; border: none; border-radius: 3px;
+      font-size: 10px; cursor: pointer; margin: auto;
+    }
+    .btn-del:hover { background: #c53030; }
+
+    /* Amount in words */
+    .amt-words { margin: 12px 0 18px; font-size: 11px; line-height: 1.6; }
+
+    /* Page 2 */
+    .p2-sep { border: none; border-top: 2px dashed #ccc; margin: 30px 0 20px; }
+    .p2-hdr { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+    .logo-sm {
+      width: 46px; height: 46px; border-radius: 50%;
+      border: 2px solid #1a237e; background: #e8eaf6;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; flex-shrink: 0;
+    }
+    .logo-sm span { font-family: sans-serif; font-weight: 900; color: #1a237e; font-size: 6.5px; line-height: 1.25; }
+    .terms-sec { font-size: 10.5px; line-height: 1.75; margin-bottom: 18px; }
+    .terms-sec h3 { font-size: 12px; margin-bottom: 5px; }
+    .bank-sec  { font-size: 10.5px; line-height: 1.85; margin-bottom: 20px; }
+    .bank-sec h3  { font-size: 12px; margin-bottom: 5px; }
+    .sig { text-align: right; margin-top: 36px; font-size: 11px; line-height: 1.9; }
+    .ty  { text-align: center; margin-top: 50px; font-size: 20px; color: #bbb; font-style: italic; }
+
+    .ph { color: #ccc; font-style: italic; }
+
+    /* ── Print ── */
+    @media print {
+      .form-panel, .app-header { display: none !important; }
+      body { background: white; height: auto; overflow: visible; }
+      .main { display: block; overflow: visible; }
+      .preview-panel { padding: 0; background: white; display: block; }
+      .quote-doc { box-shadow: none; width: 100%; padding: 18px 22px; }
+      .no-print { display: none !important; }
+      .p2-sep { display: none; }
+      .p2-content { page-break-before: always; padding-top: 16px; }
+      .ci { background: transparent !important; }
+    }
+    @page { margin: 1cm; }
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<div class="app-header">
+  <div class="hdr-left">
+    <div class="hdr-badge">SQ<br>SOL</div>
+    <div>
+      <h1>Sequenova Bill</h1>
+      <p>Sequenova Solutions Pvt. Ltd. &nbsp;·&nbsp; Internal Quotation Generator</p>
+    </div>
+  </div>
+  <button class="btn-print" onclick="window.print()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+    Download / Print PDF
+  </button>
+</div>
+
+<div class="main">
+
+  <!-- ══════════ LEFT PANEL ══════════ -->
+  <div class="form-panel">
+
+    <div class="sec-title">Quote Information</div>
+    <div class="frow">
+      <div class="fg">
+        <label>Date</label>
+        <input type="date" id="qDate" oninput="fullRender()">
+      </div>
+      <div class="fg">
+        <label>Quote No.</label>
+        <input type="text" id="qNo" placeholder="SN20260428037" oninput="fullRender()">
+      </div>
+    </div>
+
+    <div class="sec-title">Bill To <span style="font-size:0.6rem;color:#718096;text-transform:none;letter-spacing:0;font-weight:400">(fixed)</span></div>
+    <div class="bill-fixed">
+      <span class="badge-fixed">Fixed · Not editable</span><br>
+      <strong>Anderson Diagnostics Services Pvt. Ltd.</strong><br>
+      Address: No. 150, Poonamallee High Road,<br>
+      (Opp.to Dasaprakash Hotel), Chennai- 600 084, Tamil Nadu, India.<br>
+      <strong>GSTIN</strong> - 33AAKCA0333K1ZY<br>
+      <strong>Attention:</strong> Mrs. M. Vinithra<br>
+      <strong>Phone:</strong> +91 9176677722<br>
+      <strong>Email:</strong> pd@andersondiagnostics.com
+    </div>
+
+    <div class="sec-title">Ship To <span style="font-size:0.6rem;color:#718096;text-transform:none;letter-spacing:0;font-weight:400">(editable)</span></div>
+    <div class="fg"><label>Recipient Name / Title</label>
+      <input type="text" id="sName" placeholder="e.g. Dr. Subhashree Uppangala" oninput="fullRender()"></div>
+    <div class="fg"><label>Institution</label>
+      <input type="text" id="sInst" placeholder="e.g. Kasturba Medical College (KMC)" oninput="fullRender()"></div>
+    <div class="fg"><label>Address</label>
+      <textarea id="sAddr" placeholder="Full delivery address…" oninput="fullRender()"></textarea></div>
+    <div class="fg"><label>Attention</label>
+      <input type="text" id="sAttn" placeholder="e.g. Dr. Subhashree Uppangala" oninput="fullRender()"></div>
+    <div class="frow">
+      <div class="fg"><label>Phone</label>
+        <input type="text" id="sPhone" placeholder="+91 XXXXXXXXXX" oninput="fullRender()"></div>
+      <div class="fg"><label>Email</label>
+        <input type="email" id="sEmail" placeholder="user@domain.com" oninput="fullRender()"></div>
+    </div>
+
+    <div class="sec-title">GST Rates</div>
+    <div class="frow">
+      <div class="fg"><label>SGST %</label>
+        <input type="number" id="rSGST" value="0" min="0" max="100" step="0.5" oninput="fullRender()"></div>
+      <div class="fg"><label>CGST %</label>
+        <input type="number" id="rCGST" value="0" min="0" max="100" step="0.5" oninput="fullRender()"></div>
+      <div class="fg"><label>IGST %</label>
+        <input type="number" id="rIGST" value="5" min="0" max="100" step="0.5" oninput="fullRender()"></div>
+    </div>
+
+    <div class="sec-title">Transportation</div>
+    <div class="frow">
+      <div class="fg"><label>Transport Cost (₹)</label>
+        <input type="number" id="tCost" value="0" min="0" oninput="fullRender()"></div>
+      <div class="fg"><label>Transport GST %</label>
+        <input type="number" id="tGST" value="18" min="0" max="100" oninput="fullRender()"></div>
+    </div>
+
+    <div class="sec-title">Line Items</div>
+    <button class="btn-add-item" onclick="addItem()">+ Add Item</button>
+    <div style="font-size:0.7rem;color:#a0aec0;margin-top:7px;line-height:1.5">
+      Items are editable directly in the quotation preview on the right. Click any cell to edit.
+    </div>
+
+  </div><!-- /form-panel -->
+
+  <!-- ══════════ PREVIEW PANEL ══════════ -->
+  <div class="preview-panel">
+    <div class="quote-doc" id="preview"></div>
+  </div>
+
+</div>
+
+<script>
+// ── State ──
+let items = [];
+let nid   = 1;
+
+function addItem() {
+  items.push({ id: nid++, cat:'', desc:'', hsn:'', pack:'1 Unit', price:0, qty:1 });
+  fullRender();
+}
+
+function removeItem(id) {
+  items = items.filter(i => i.id !== id);
+  fullRender();
+}
+
+// ── Helpers ──
+function $v(id)  { return document.getElementById(id)?.value ?? ''; }
+function $n(id)  { return parseFloat(document.getElementById(id)?.value) || 0; }
+function h(s)    { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>'); }
+function ev(s)   { return String(s||'').replace(/"/g,'&quot;').replace(/&/g,'&amp;'); }
+function inr(n)  { return '₹ ' + Number(n).toLocaleString('en-IN', {minimumFractionDigits:0,maximumFractionDigits:0}); }
+function fmtD(s) { if (!s) return '—'; const [y,m,d]=s.split('-'); return `${d}.${m}.${y}`; }
+
+// ── Number → Indian words ──
+const _o = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine',
+  'Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+const _t = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+function two(n) { return n<20?_o[n]:_t[Math.floor(n/10)]+(n%10?' '+_o[n%10]:''); }
+function n2w(x) {
+  const n=Math.round(x); if(!n) return 'Zero Only';
+  const p=[]; let r=n;
+  if(r>=10000000){p.push(two(Math.floor(r/10000000))+' Crore');r%=10000000;}
+  if(r>=100000)  {p.push(two(Math.floor(r/100000))+' Lakh');  r%=100000;}
+  if(r>=1000)    {p.push(two(Math.floor(r/1000))+' Thousand');r%=1000;}
+  if(r>=100)     {p.push(_o[Math.floor(r/100)]+' Hundred');   r%=100;}
+  if(r>0)        {p.push(two(r));}
+  return 'Rupees '+p.join(' ')+' Only';
+}
+
+// ── Compute totals from current items & panel values ──
+function computeTotals() {
+  const sr = $n('rSGST'), cr = $n('rCGST'), ir = $n('rIGST');
+  const tc = $n('tCost'), tgr = $n('tGST');
+  let sub=0, tsg=0, tcg=0, tig=0, qty=0;
+  items.forEach(it=>{
+    const t=it.price*it.qty;
+    sub+=t; tsg+=t*sr/100; tcg+=t*cr/100; tig+=t*ir/100; qty+=it.qty;
+  });
+  const tgAmt = tc*tgr/100;
+  const grand = sub+tsg+tcg+tig+tc+tgAmt;
+  return { sub, tsg, tcg, tig, qty, tc, tgAmt, grand, sr, cr, ir, tgr };
+}
+
+// ── Update only calculated cells (no re-render) ──
+function calcOnly() {
+  const {sub,tsg,tcg,tig,qty,tc,tgAmt,grand,tgr} = computeTotals();
+  items.forEach(it=>{
+    const t=it.price*it.qty, sr=$n('rSGST'), cr=$n('rCGST'), ir=$n('rIGST');
+    setCell('tc-'+it.id,   inr(t));
+    setCell('sg-'+it.id,   inr(t*sr/100));
+    setCell('cg-'+it.id,   inr(t*cr/100));
+    setCell('ig-'+it.id,   inr(t*ir/100));
+  });
+  setCell('sum-qty', qty);
+  setCell('sum-sub', inr(sub));
+  setCell('sum-sg',  inr(tsg));
+  setCell('sum-cg',  inr(tcg));
+  setCell('sum-ig',  inr(tig));
+  setCell('sum-tc',  inr(tc));
+  setCell('sum-tga', `${tgr}% GST (Transport)`);
+  setCell('sum-tgamt', inr(tgAmt));
+  setCell('sum-grand', inr(grand));
+  setCell('amtWords', n2w(grand));
+}
+function setCell(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = val;
+}
+
+// ── Attach listeners to inline item inputs ──
+function attachListeners() {
+  document.querySelectorAll('.ci[data-id]').forEach(el => {
+    el.oninput = function() {
+      const id = +this.dataset.id;
+      const f  = this.dataset.f;
+      const it = items.find(i=>i.id===id);
+      if (!it) return;
+      it[f] = (f==='price'||f==='qty') ? (parseFloat(this.value)||0) : this.value;
+      calcOnly();
+    };
+  });
+}
+
+// ── Full preview render ──
+function fullRender() {
+  const qdate = $v('qDate'), qno = $v('qNo').trim()||'—';
+  const {sub,tsg,tcg,tig,qty,tc,tgAmt,grand,sr,cr,ir,tgr} = computeTotals();
+
+  // Ship To block
+  const sn=$v('sName'), si=$v('sInst'), sa=$v('sAddr'), sat=$v('sAttn'), sp=$v('sPhone'), se=$v('sEmail');
+  const shipRows=[
+    sn  && `<strong>${h(sn)}</strong>`,
+    si  && `<strong>${h(si)}</strong>`,
+    sa  && `<strong>Address:</strong> ${h(sa)}`,
+    sat && `<strong>Attention:</strong> ${h(sat)}`,
+    sp  && `<strong>Phone Number:</strong> ${h(sp)}`,
+    se  && `<strong>Email:</strong> ${h(se)}`,
+  ].filter(Boolean);
+  const shipBlock = shipRows.length
+    ? shipRows.join('<br>')
+    : '<span class="ph">Fill Ship To details in the left panel →</span>';
+
+  // Item rows (inline editable)
+  const itemRows = items.length ? items.map((it,i)=>`
+    <tr class="item-row">
+      <td>${i+1}</td>
+      <td><input class="ci" data-id="${it.id}" data-f="cat"  value="${ev(it.cat)}"  placeholder="Cat #"></td>
+      <td class="tleft"><input class="ci left" data-id="${it.id}" data-f="desc" value="${ev(it.desc)}" placeholder="Description…"></td>
+      <td><input class="ci" data-id="${it.id}" data-f="hsn"  value="${ev(it.hsn)}"  placeholder="HSN"></td>
+      <td><input class="ci" data-id="${it.id}" data-f="pack" value="${ev(it.pack)}" placeholder="1 Unit"></td>
+      <td><input class="ci num" type="number" data-id="${it.id}" data-f="price" value="${it.price}" min="0"></td>
+      <td><input class="ci num" type="number" data-id="${it.id}" data-f="qty"   value="${it.qty}"   min="0"></td>
+      <td id="tc-${it.id}">${inr(it.price*it.qty)}</td>
+      <td id="sg-${it.id}">${inr(it.price*it.qty*sr/100)}</td>
+      <td id="cg-${it.id}">${inr(it.price*it.qty*cr/100)}</td>
+      <td id="ig-${it.id}">${inr(it.price*it.qty*ir/100)}</td>
+      <td class="del-col no-print"><button class="btn-del" onclick="removeItem(${it.id})">✕</button></td>
+    </tr>`).join('')
+    : `<tr><td colspan="12" style="padding:14px;text-align:center;color:#bbb;font-style:italic">No items — click "+ Add Item" in the left panel</td></tr>`;
+
+  document.getElementById('preview').innerHTML = `
+
+    <!-- PAGE 1 -->
+    <div class="dh">
+      <div class="dh-logo">
+        <div class="logo-circle">
+          <span>SEQUE<br>NOVA</span>
+          <small>SOLUTIONS</small>
+        </div>
+        <div>
+          <div class="co-name">SEQUENOVA SOLUTIONS</div>
+          <div class="co-sub">PVT LTD</div>
+        </div>
+      </div>
+      <div class="dh-title">QUOTATION</div>
+      <div class="dh-qno">${h(qno)}</div>
+    </div>
+
+    <div class="seller-box">
+      <strong style="font-size:12px">Sequenova Solutions Private Limited</strong><br>
+      <strong>Address:</strong> - 108, 1st Floor, Blue Skky Icon, opposite Parvatibai Genba Moze College of Engineering,
+      Baif Road, Sambhaji Nagar, Wagholi, Pune - 412207, Maharashtra, India.<br>
+      <strong>Attention :</strong> Ms. Vishakha Gayke &emsp;
+      <strong>Email:</strong> vishakha.gayke@sequenovasolutions.com &emsp;
+      <strong>GST</strong> - 27ABNCS3437J1ZV &emsp;
+      <strong>CIN</strong> - U21001PN2024PTC230531
+    </div>
+
+    <table class="addr-tbl">
+      <thead>
+        <tr>
+          <th style="width:37%">Bill To</th>
+          <th style="width:37%">Ship To</th>
+          <td rowspan="2" class="date-cell" style="width:26%;border:1.5px solid #222;padding:9px 11px;vertical-align:middle">
+            <strong>Quotation Date:</strong> ${fmtD(qdate)}<br>
+            <strong>Quotation No:</strong> ${h(qno)}
+          </td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <strong>Anderson Diagnostics Services Pvt. Ltd.</strong><br>
+            <strong>Address:</strong> -No. 150, Poonamallee High Road,<br>
+            (Opp.to Dasaprakash Hotel), Chennai- 600 084, Tamil Nadu, India.<br>
+            <strong>GSTIN</strong> - 33AAKCA0333K1ZY<br>
+            <strong>Attention:</strong> Mrs. M. Vinithra<br>
+            <strong>Phone Number:</strong> +91 9176677722<br>
+            <strong>Email:</strong> pd@andersondiagnostics.com
+          </td>
+          <td>${shipBlock}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <table class="it">
+      <thead>
+        <tr>
+          <th rowspan="2" style="width:4%">Sr.<br>No.</th>
+          <th rowspan="2" style="width:8%">Cat. #</th>
+          <th rowspan="2" style="width:20%">Description</th>
+          <th rowspan="2" style="width:8%">HSN Code</th>
+          <th rowspan="2" style="width:7%">Pack size</th>
+          <th rowspan="2" style="width:9%">Unit price</th>
+          <th rowspan="2" style="width:5%">QTY.</th>
+          <th rowspan="2" style="width:10%">Total Cost<br>(INR)</th>
+          <th colspan="3">GST</th>
+          <th rowspan="2" class="no-print" style="width:3%;border-color:transparent;background:transparent"></th>
+        </tr>
+        <tr>
+          <th style="width:9%">SGST<br>${sr}%</th>
+          <th style="width:9%">CGST<br>${cr}%</th>
+          <th style="width:9%">IGST<br>${ir}%</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${itemRows}
+        <tr class="sub-row">
+          <td colspan="6" style="text-align:right">Subtotal</td>
+          <td id="sum-qty">${qty}</td>
+          <td id="sum-sub">${inr(sub)}</td>
+          <td id="sum-sg">${inr(tsg)}</td>
+          <td id="sum-cg">${inr(tcg)}</td>
+          <td id="sum-ig">${inr(tig)}</td>
+          <td class="no-print" style="border-color:transparent;background:transparent"></td>
+        </tr>
+        <tr class="tp-row">
+          <td colspan="7" style="text-align:right">Transportation Cost</td>
+          <td colspan="4" id="sum-tc">${inr(tc)}</td>
+          <td class="no-print" style="border-color:transparent;background:transparent"></td>
+        </tr>
+        <tr class="tg-row">
+          <td colspan="7" style="text-align:right" id="sum-tga">${tgr}% GST (Transport)</td>
+          <td colspan="4" id="sum-tgamt">${inr(tgAmt)}</td>
+          <td class="no-print" style="border-color:transparent;background:transparent"></td>
+        </tr>
+        <tr class="tot-row">
+          <td colspan="7" style="text-align:right"><strong>TOTAL PRICE</strong></td>
+          <td colspan="4" id="sum-grand"><strong>${inr(grand)}</strong></td>
+          <td class="no-print" style="border-color:transparent;background:transparent"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="amt-words">
+      <strong>Amount in Word:</strong>&emsp;<span id="amtWords">${n2w(grand)}</span>
+    </div>
+
+    <!-- PAGE 2 -->
+    <hr class="p2-sep">
+    <div class="p2-content">
+      <div class="p2-hdr">
+        <div class="logo-sm"><span>SEQUE<br>NOVA</span></div>
+        <div style="font-size:13px;font-weight:bold;color:#1a237e">SEQUENOVA SOLUTIONS PVT LTD</div>
+        <div style="flex:1;text-align:center;font-size:18px;font-weight:bold;letter-spacing:3px">QUOTATION</div>
+        <div style="font-size:12px;font-weight:bold">${h(qno)}</div>
+      </div>
+
+      <div class="terms-sec">
+        <h3>Terms &amp; Conditions:</h3>
+        1. Price: All prices mentioned above are in INR<br>
+        2. Payment: 100% Advanced.<br>
+        3. Delivery: 15 working days from the date of PO received along with advanced payment. (As per Stock Availability)<br>
+        4. Expiry: One year against manufacturing
+      </div>
+
+      <div class="bank-sec">
+        <h3>Bank Details:</h3>
+        <strong>Beneficiary:</strong> Sequenova Solutions Private Limited<br>
+        <strong>Bank Name:</strong> Axis Bank<br>
+        <strong>Branch:</strong> CIDCO Branch, Aurangabad &emsp; <strong>Branch Code :</strong> 000750<br>
+        <strong>Account No.:</strong> 924020026059043<br>
+        <strong>IFSC:</strong> UTIB0000750 &emsp; <strong>SWIFT Code:</strong> AXISINBB<br>
+        <strong>Bank Address:</strong> Ghai Chambers, Plot No. 20 CIDCO, Town Centre, Jalna Road,
+        Aurangabad 431003, Maharashtra, India
+      </div>
+
+      <div class="sig">
+        Yours Truly,<br>
+        For Sequenova Solutions Private Limited<br>
+        <strong>Ms. Vishakha Gayke</strong>
+      </div>
+
+      <div class="ty">Thank You for Your Business !</div>
+    </div>
+  `;
+
+  attachListeners();
+}
+
+// ── Init ──
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('qDate').value = new Date().toISOString().split('T')[0];
+  fullRender();
+});
+</script>
+</body>
+</html>
