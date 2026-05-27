@@ -120,7 +120,7 @@
     .dh-row1 { display: grid; grid-template-columns: 1fr auto 1fr; align-items: baseline; margin-bottom: 16px; }
     .dh-row2 { display: grid; grid-template-columns: 1fr 1fr; align-items: start; }
     .dh-company { font-family: Arial, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: .2px; text-transform: uppercase; white-space: nowrap; justify-self: start; }
-    .doc-logo-img { width: 150px; max-height: 110px; object-fit: contain; grid-column: 1; justify-self: start; }
+    .doc-logo-img { width: 100px; max-height: 75px; object-fit: contain; grid-column: 1; justify-self: start; }
     .dh-title { text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; }
     .dh-qno   { font-size: 15px; font-weight: bold; text-align: right; justify-self: end; }
 
@@ -159,7 +159,7 @@
     /* Page 2 */
     .p2-hdr { margin-bottom: 16px; }
     .p2-hdr .dh-row1 { margin-bottom: 12px; }
-    .p2-logo-img { width: 150px; max-height: 110px; object-fit: contain; flex-shrink: 0; }
+    .p2-logo-img { width: 100px; max-height: 75px; object-fit: contain; flex-shrink: 0; }
     .terms-sec { font-size: 15px; line-height: 1.75; margin-bottom: 22px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; }
     .terms-sec h3 { font-size: 24px; margin-bottom: 6px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-weight: bold; }
     .bank-sec { font-size: 15px; line-height: 1.85; margin-bottom: 24px; font-weight: bold; font-family: Calibri, 'Segoe UI', Arial, sans-serif; }
@@ -583,11 +583,20 @@ function downloadPDF() {
   wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:white;';
   const clone = document.getElementById('preview').cloneNode(true);
   clone.style.cssText = 'width:794px;display:block;';
-  clone.querySelectorAll('.quote-page').forEach(p => {
+  const clonePages = clone.querySelectorAll('.quote-page');
+  clonePages.forEach((p, i) => {
     p.style.width = '794px';
     p.style.minWidth = '794px';
     p.style.margin = '0';
     p.style.boxShadow = 'none';
+    if (i < clonePages.length - 1) {
+      p.style.pageBreakAfter = 'always';
+      p.style.breakAfter = 'page';
+    } else {
+      p.style.minHeight = 'auto';
+      p.style.pageBreakAfter = 'avoid';
+      p.style.breakAfter = 'avoid';
+    }
   });
   clone.querySelectorAll('.page-label').forEach(el => el.style.display = 'none');
   wrapper.appendChild(clone);
