@@ -733,18 +733,6 @@
         </div>
       </div>
 
-      <div class="sec-title">Transportation</div>
-      <div class="frow">
-        <div class="fg">
-          <label>Transport Cost (₹)</label>
-          <input type="number" id="tCost" value="0" min="0" oninput="renderPreview()">
-        </div>
-        <div class="fg">
-          <label>Transport GST %</label>
-          <input type="number" id="tGST" value="18" min="0" max="100" oninput="renderPreview()">
-        </div>
-      </div>
-
       <div class="sec-title">Line Items</div>
       <div id="itemCards"></div>
       <button class="btn-add" onclick="addItem()">+ Add Item</button>
@@ -792,7 +780,7 @@
 
     // ── Item management ──
     function addItem() {
-      items.push({ id: nid++, cat: '', desc: '', hsn: '', pack: '1 Unit', price: 0, qty: 1, sgst: 0, cgst: 0, igst: 5 });
+      items.push({ id: nid++, cat: '', desc: '', hsn: '', pack: '1 Unit', price: 0, qty: 1, sgst: 0, cgst: 0, igst: 5, tcost: 0, tgst: 18 });
       renderItemCards();
       renderPreview();
     }
@@ -855,13 +843,20 @@
           <input type="number" value="${it.igst}" min="0" max="100" step="0.5"
             oninput="updateItem(${it.id},'igst',parseFloat(this.value)||0)"></div>
       </div>
+      <div class="frow">
+        <div class="fg"><label>Transport Cost (₹)</label>
+          <input type="number" value="${it.tcost}" min="0"
+            oninput="updateItem(${it.id},'tcost',parseFloat(this.value)||0)"></div>
+        <div class="fg"><label>Transport GST %</label>
+          <input type="number" value="${it.tgst}" min="0" max="100"
+            oninput="updateItem(${it.id},'tgst',parseFloat(this.value)||0)"></div>
+      </div>
     </div>`).join('');
     }
 
     // ── Render quotation preview ──
     function renderPreview() {
       const qdate = $v('qDate'), qno = $v('qNo').trim() || '—';
-      const tc = $n('tCost'), tgr = $n('tGST');
 
       // Bill To
       const bn = $v('bName'), ba = $v('bAddr'), bg = $v('bGST'), bat = $v('bAttn'), bp = $v('bPhone'), be = $v('bEmail');
@@ -891,13 +886,13 @@
         ? shipParts.join('')
         : '<span class="ph">Fill Ship To details in the left panel</span>';
 
-      // Compute totals (per-item GST rates)
-      let sub = 0, tSG = 0, tCG = 0, tIG = 0, totalQty = 0;
+      // Compute totals (per-item GST + transport rates)
+      let sub = 0, tSG = 0, tCG = 0, tIG = 0, totalQty = 0, tc = 0, tgAmt = 0;
       items.forEach(it => {
         const t = it.price * it.qty;
         sub += t; tSG += t * it.sgst / 100; tCG += t * it.cgst / 100; tIG += t * it.igst / 100; totalQty += it.qty;
+        tc += it.tcost; tgAmt += it.tcost * it.tgst / 100;
       });
-      const tgAmt = tc * tgr / 100;
       const grand = sub + tSG + tCG + tIG + tc + tgAmt;
 
       // Item rows — static display, no inline inputs
@@ -988,7 +983,7 @@
             <td colspan="4">${inr(tc)}</td>
           </tr>
           <tr>
-            <td colspan="7" style="text-align:right">${tgr}% GST (Transport)</td>
+            <td colspan="7" style="text-align:right">GST (Transport)</td>
             <td colspan="4">${inr(tgAmt)}</td>
           </tr>
           <tr class="tot-row">
