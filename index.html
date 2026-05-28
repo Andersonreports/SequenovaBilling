@@ -677,6 +677,34 @@
         </div>
       </div>
 
+      <div class="sec-title">Bill To</div>
+      <div class="fg">
+        <label>Company / Name</label>
+        <input type="text" id="bName" placeholder="e.g. Anderson Diagnostics Services Pvt. Ltd." oninput="renderPreview()">
+      </div>
+      <div class="fg">
+        <label>Address</label>
+        <textarea id="bAddr" placeholder="Full billing address…" oninput="renderPreview()"></textarea>
+      </div>
+      <div class="fg">
+        <label>GSTIN</label>
+        <input type="text" id="bGST" placeholder="e.g. 33AAKCA0333K1ZY" oninput="renderPreview()">
+      </div>
+      <div class="fg">
+        <label>Attention</label>
+        <input type="text" id="bAttn" placeholder="e.g. Mrs. M. Vinithra" oninput="renderPreview()">
+      </div>
+      <div class="frow">
+        <div class="fg">
+          <label>Phone</label>
+          <input type="text" id="bPhone" placeholder="+91 XXXXXXXXXX" oninput="renderPreview()">
+        </div>
+        <div class="fg">
+          <label>Email</label>
+          <input type="email" id="bEmail" placeholder="user@domain.com" oninput="renderPreview()">
+        </div>
+      </div>
+
       <div class="sec-title">Ship To</div>
       <div class="fg">
         <label>Recipient Name / Title</label>
@@ -702,22 +730,6 @@
         <div class="fg">
           <label>Email</label>
           <input type="email" id="sEmail" placeholder="user@domain.com" oninput="renderPreview()">
-        </div>
-      </div>
-
-      <div class="sec-title">GST Rates</div>
-      <div class="frow">
-        <div class="fg">
-          <label>SGST %</label>
-          <input type="number" id="rSGST" value="0" min="0" max="100" step="0.5" oninput="renderPreview()">
-        </div>
-        <div class="fg">
-          <label>CGST %</label>
-          <input type="number" id="rCGST" value="0" min="0" max="100" step="0.5" oninput="renderPreview()">
-        </div>
-        <div class="fg">
-          <label>IGST %</label>
-          <input type="number" id="rIGST" value="5" min="0" max="100" step="0.5" oninput="renderPreview()">
         </div>
       </div>
 
@@ -780,7 +792,7 @@
 
     // ── Item management ──
     function addItem() {
-      items.push({ id: nid++, cat: '', desc: '', hsn: '', pack: '1 Unit', price: 0, qty: 1 });
+      items.push({ id: nid++, cat: '', desc: '', hsn: '', pack: '1 Unit', price: 0, qty: 1, sgst: 0, cgst: 0, igst: 5 });
       renderItemCards();
       renderPreview();
     }
@@ -832,14 +844,38 @@
           <input type="number" value="${it.qty}" min="0" style="max-width:70px"
             oninput="updateItem(${it.id},'qty',parseFloat(this.value)||0)"></div>
       </div>
+      <div class="frow">
+        <div class="fg"><label>SGST %</label>
+          <input type="number" value="${it.sgst}" min="0" max="100" step="0.5"
+            oninput="updateItem(${it.id},'sgst',parseFloat(this.value)||0)"></div>
+        <div class="fg"><label>CGST %</label>
+          <input type="number" value="${it.cgst}" min="0" max="100" step="0.5"
+            oninput="updateItem(${it.id},'cgst',parseFloat(this.value)||0)"></div>
+        <div class="fg"><label>IGST %</label>
+          <input type="number" value="${it.igst}" min="0" max="100" step="0.5"
+            oninput="updateItem(${it.id},'igst',parseFloat(this.value)||0)"></div>
+      </div>
     </div>`).join('');
     }
 
     // ── Render quotation preview ──
     function renderPreview() {
       const qdate = $v('qDate'), qno = $v('qNo').trim() || '—';
-      const sr = $n('rSGST'), cr = $n('rCGST'), ir = $n('rIGST');
       const tc = $n('tCost'), tgr = $n('tGST');
+
+      // Bill To
+      const bn = $v('bName'), ba = $v('bAddr'), bg = $v('bGST'), bat = $v('bAttn'), bp = $v('bPhone'), be = $v('bEmail');
+      const billParts = [
+        bn && `<strong class="bill-company">${h(bn)}</strong>`,
+        ba && `<div class="info-line"><strong>Address:</strong><span>${h(ba).replace(/<br>/g, ' ')}</span></div>`,
+        bg && `<div class="info-line"><strong>GSTIN:</strong><span>${h(bg)}</span></div>`,
+        bat && `<div class="info-line"><strong>Attention:</strong><span>${h(bat)}</span></div>`,
+        bp && `<div class="info-line"><strong>Phone Number:</strong><span>${h(bp)}</span></div>`,
+        be && `<div class="info-line"><strong>Email:</strong><span>${h(be)}</span></div>`,
+      ].filter(Boolean);
+      const billBlock = billParts.length
+        ? billParts.join('')
+        : '<span class="ph">Fill Bill To details in the left panel</span>';
 
       // Ship To
       const sn = $v('sName'), si = $v('sInst'), sa = $v('sAddr'), sat = $v('sAttn'), sp = $v('sPhone'), se = $v('sEmail');
@@ -855,11 +891,11 @@
         ? shipParts.join('')
         : '<span class="ph">Fill Ship To details in the left panel</span>';
 
-      // Compute totals
+      // Compute totals (per-item GST rates)
       let sub = 0, tSG = 0, tCG = 0, tIG = 0, totalQty = 0;
       items.forEach(it => {
         const t = it.price * it.qty;
-        sub += t; tSG += t * sr / 100; tCG += t * cr / 100; tIG += t * ir / 100; totalQty += it.qty;
+        sub += t; tSG += t * it.sgst / 100; tCG += t * it.cgst / 100; tIG += t * it.igst / 100; totalQty += it.qty;
       });
       const tgAmt = tc * tgr / 100;
       const grand = sub + tSG + tCG + tIG + tc + tgAmt;
@@ -877,9 +913,9 @@
           <td>${inr(it.price)}</td>
           <td>${it.qty}</td>
           <td>${inr(total)}</td>
-          <td>${inr(total * sr / 100)}</td>
-          <td>${inr(total * cr / 100)}</td>
-          <td>${inr(total * ir / 100)}</td>
+          <td>${it.sgst ? it.sgst + '%<br>' : ''}${inr(total * it.sgst / 100)}</td>
+          <td>${it.cgst ? it.cgst + '%<br>' : ''}${inr(total * it.cgst / 100)}</td>
+          <td>${it.igst ? it.igst + '%<br>' : ''}${inr(total * it.igst / 100)}</td>
         </tr>`;
         }).join('')
         : `<tr><td colspan="11" style="padding:14px;text-align:center;color:#bbb;font-style:italic">No items — add items using the left panel</td></tr>`;
@@ -908,14 +944,7 @@
         </thead>
         <tbody>
           <tr>
-            <td>
-              <strong class="bill-company">Anderson Diagnostics Services Pvt. Ltd.</strong>
-              <div class="info-line"><strong>Address:</strong><span>No. 150, Poonamallee High Road, (Opp. to Dasaprakash Hotel), Chennai - 600 084, Tamil Nadu, India.</span></div>
-              <div class="info-line"><strong>GSTIN:</strong><span>33AAKCA0333K1ZY</span></div>
-              <div class="info-line"><strong>Attention:</strong><span>Mrs. M. Vinithra</span></div>
-              <div class="info-line"><strong>Phone Number:</strong><span>+91 9176677722</span></div>
-              <div class="info-line"><strong>Email:</strong><span>pd@andersondiagnostics.com</span></div>
-            </td>
+            <td>${billBlock}</td>
             <td>${shipBlock}</td>
             <td class="date-cell">
               <strong>Quotation Date:</strong> ${fmtD(qdate)}<br>
@@ -939,9 +968,9 @@
             <th colspan="3">GST</th>
           </tr>
           <tr>
-            <th style="width:9%">SGST<br>${sr}%</th>
-            <th style="width:9%">CGST<br>${cr}%</th>
-            <th style="width:9%">IGST<br>${ir}%</th>
+            <th style="width:9%">SGST</th>
+            <th style="width:9%">CGST</th>
+            <th style="width:9%">IGST</th>
           </tr>
         </thead>
         <tbody>
