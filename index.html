@@ -71,17 +71,20 @@
     }
 
     .btn-print {
+      width: 100%;
       background: #16833a;
       color: white;
       border: 1px solid #0f6e2f;
-      padding: 8px 17px;
-      border-radius: 8px;
+      padding: 9px 0;
+      border-radius: 6px;
       cursor: pointer;
-      font-size: 0.81rem;
+      font-size: 0.8rem;
       font-weight: 700;
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 7px;
+      margin-top: 10px;
       box-shadow: 0 2px 5px rgba(22, 131, 58, .18);
       transition: background .18s, transform .18s, box-shadow .18s;
     }
@@ -650,14 +653,6 @@
         <p style="font-size:0.72rem;color:#667085;margin-top:2px;">Quotation Generator</p>
       </div>
     </div>
-    <button class="btn-print" onclick="downloadPDF()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-        <polyline points="7 10 12 15 17 10" />
-        <line x1="12" y1="15" x2="12" y2="3" />
-      </svg>
-      Download PDF
-    </button>
   </div>
 
   <div class="main">
@@ -748,6 +743,14 @@
       <div class="sec-title">Line Items</div>
       <div id="itemCards"></div>
       <button class="btn-add" onclick="addItem()">+ Add Item</button>
+      <button class="btn-print" onclick="downloadPDF()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        Generate Bill
+      </button>
 
     </div><!-- /form-panel -->
 
@@ -1088,7 +1091,7 @@
       }).from(clone).save().then(() => {
         document.body.removeChild(wrapper);
         btn.disabled = false;
-        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download PDF';
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Generate Bill';
       });
     }
 
