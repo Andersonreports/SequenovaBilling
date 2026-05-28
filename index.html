@@ -902,11 +902,10 @@
       const tgAmt = tc * tgr / 100;
       const grand = sub + tSG + tCG + tIG + tc + tgAmt;
 
-      // Item rows — static display, no inline inputs
-      const itemRows = items.length
-        ? items.map((it, i) => {
-          const total = it.price * it.qty;
-          return `<tr class="item-row">
+      // Build all item row HTML
+      const allRows = items.map((it, i) => {
+        const total = it.price * it.qty;
+        return `<tr class="item-row">
           <td>${i + 1}</td>
           <td>${h(it.cat) || '—'}</td>
           <td class="left">${h(it.desc) || '—'}</td>
@@ -919,45 +918,9 @@
           <td>${it.cgst ? it.cgst + '%<br>' : ''}${inr(total * it.cgst / 100)}</td>
           <td>${it.igst ? it.igst + '%<br>' : ''}${inr(total * it.igst / 100)}</td>
         </tr>`;
-        }).join('')
-        : `<tr><td colspan="11" style="padding:14px;text-align:center;color:#bbb;font-style:italic">No items — add items using the left panel</td></tr>`;
+      });
 
-      document.getElementById('preview').innerHTML = `
-
-    <!-- ══ PAGE 1 ══ -->
-    <div class="quote-page">
-      <span class="page-label">PAGE 1</span>
-
-      <div class="dh">
-        <div class="dh-row1">
-          <div></div>
-          <div class="dh-title">QUOTATION</div>
-          <div class="dh-qno">${h(qno)}</div>
-        </div>
-      </div>
-
-      <table class="addr-tbl">
-        <thead>
-          <tr>
-            <th style="width:39%">Bill To</th>
-            <th style="width:35%">Ship To</th>
-            <th style="width:26%"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>${billBlock}</td>
-            <td>${shipBlock}</td>
-            <td class="date-cell">
-              <strong>Quotation Date:</strong> ${fmtD(qdate)}<br>
-              <strong>Quotation No:</strong> ${h(qno)}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <table class="it">
-        <thead>
+      const tblHead = `<thead>
           <tr>
             <th rowspan="2" style="width:4%">Sr.<br>No.</th>
             <th rowspan="2" style="width:8%">Cat. #</th>
@@ -974,9 +937,9 @@
             <th style="width:9%">CGST</th>
             <th style="width:9%">IGST</th>
           </tr>
-        </thead>
-        <tbody>
-          ${itemRows}
+        </thead>`;
+
+      const totalsRows = `
           <tr class="sub-row">
             <td colspan="6" style="text-align:right">Subtotal</td>
             <td>${totalQty}</td>
@@ -996,19 +959,27 @@
           <tr class="tot-row">
             <td colspan="7" style="text-align:right"><strong>TOTAL PRICE</strong></td>
             <td colspan="4"><strong>${inr(grand)}</strong></td>
-          </tr>
-        </tbody>
-      </table>
+          </tr>`;
 
-      <div class="amt-words">
-        <strong>Amount in Word:</strong>&emsp;${n2w(grand)}
-      </div>
-    </div>
+      const amtWords = `<div class="amt-words"><strong>Amount in Word:</strong>&emsp;${n2w(grand)}</div>`;
 
-    <!-- ══ PAGE 2 ══ -->
+      // Paginate: page 1 has address table so fewer rows fit; continuation pages fit more
+      const LIMIT_P1 = 8;
+      const LIMIT_PC = 15;
+
+      // Split allRows into buckets per page
+      const buckets = [];
+      if (!allRows.length) {
+        buckets.push([]);
+      } else {
+        buckets.push(allRows.slice(0, LIMIT_P1));
+        let rest = allRows.slice(LIMIT_P1);
+        while (rest.length) { buckets.push(rest.splice(0, LIMIT_PC)); }
+      }
+
+      const termsPage = `
     <div class="quote-page">
-      <span class="page-label">PAGE 2</span>
-
+      <span class="page-label">PAGE ${buckets.length + 1}</span>
       <div class="p2-hdr">
         <div class="dh-row1">
           <div></div>
@@ -1016,7 +987,6 @@
           <div style="font-size:15px;font-weight:bold;text-align:right;justify-self:end">${h(qno)}</div>
         </div>
       </div>
-
       <div class="terms-sec">
         <h3>Terms &amp; Conditions:</h3>
         1. Price: All prices mentioned above are in INR<br>
@@ -1024,7 +994,6 @@
         3. Delivery: 15 working days from the date of PO received along with advanced payment. (As per Stock Availability)<br>
         4. Expiry: One year against manufacturing
       </div>
-
       <div class="bank-sec">
         <h3>Bank Details:</h3>
         <table class="bank-tbl">
@@ -1038,16 +1007,76 @@
           <tr><td class="bl">Bank Address</td><td class="bc">:</td><td>Ghai Chambers, Plot No. 20 CIDCO, Town Centre, Jalna Road,<br>Aurangabad 431003, Maharashtra, India</td></tr>
         </table>
       </div>
-
       <div class="sig">
         Yours Truly,<br>
         For Sequenova Solutions Private Limited<br>
         Ms. Vishakha Gayke
       </div>
-
       <div class="ty">Thank You for Your Business !</div>
-    </div>
-  `;
+    </div>`;
+
+      let html = '';
+      buckets.forEach((rows, idx) => {
+        const isLast = idx === buckets.length - 1;
+        const pageNum = idx + 1;
+        const bodyContent = rows.length
+          ? rows.join('') + (isLast ? totalsRows : `<tr><td colspan="11" style="padding:8px;text-align:center;font-style:italic;color:#666">Continued on next page…</td></tr>`)
+          : `<tr><td colspan="11" style="padding:14px;text-align:center;color:#bbb;font-style:italic">No items — add items using the left panel</td></tr>${totalsRows}`;
+
+        if (idx === 0) {
+          html += `
+    <!-- ══ PAGE ${pageNum} ══ -->
+    <div class="quote-page">
+      <span class="page-label">PAGE ${pageNum}</span>
+      <div class="dh">
+        <div class="dh-row1">
+          <div></div>
+          <div class="dh-title">QUOTATION</div>
+          <div class="dh-qno">${h(qno)}</div>
+        </div>
+      </div>
+      <table class="addr-tbl">
+        <thead>
+          <tr>
+            <th style="width:39%">Bill To</th>
+            <th style="width:35%">Ship To</th>
+            <th style="width:26%"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>${billBlock}</td>
+            <td>${shipBlock}</td>
+            <td class="date-cell">
+              <strong>Quotation Date:</strong> ${fmtD(qdate)}<br>
+              <strong>Quotation No:</strong> ${h(qno)}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <table class="it">${tblHead}<tbody>${bodyContent}</tbody></table>
+      ${isLast ? amtWords : ''}
+    </div>`;
+        } else {
+          html += `
+    <!-- ══ PAGE ${pageNum} ══ -->
+    <div class="quote-page">
+      <span class="page-label">PAGE ${pageNum}</span>
+      <div class="p2-hdr">
+        <div class="dh-row1">
+          <div></div>
+          <div style="text-align:center;font-size:20px;font-weight:bold;letter-spacing:3px">QUOTATION</div>
+          <div style="font-size:15px;font-weight:bold;text-align:right;justify-self:end">${h(qno)}</div>
+        </div>
+      </div>
+      <table class="it">${tblHead}<tbody>${bodyContent}</tbody></table>
+      ${isLast ? amtWords : ''}
+    </div>`;
+        }
+      });
+
+      html += termsPage;
+      document.getElementById('preview').innerHTML = html;
     }
 
     // ── Download PDF ──
