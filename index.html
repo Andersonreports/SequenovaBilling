@@ -539,6 +539,28 @@
       font-family: Calibri, 'Segoe UI', Arial, sans-serif;
     }
 
+    .bank-tbl {
+      border-collapse: collapse;
+      font-size: 15px;
+      font-family: Calibri, 'Segoe UI', Arial, sans-serif;
+    }
+
+    .bank-tbl td {
+      padding: 1px 0;
+      vertical-align: top;
+    }
+
+    .bank-tbl .bl {
+      font-weight: bold;
+      white-space: nowrap;
+      padding-right: 6px;
+    }
+
+    .bank-tbl .bc {
+      font-weight: bold;
+      padding-right: 10px;
+    }
+
     .sig {
       display: table;
       margin-left: auto;
@@ -973,14 +995,16 @@
 
       <div class="bank-sec">
         <h3>Bank Details:</h3>
-        <strong>Beneficiary:</strong> Sequenova Riverhead Biosciences Solutions<br>
-        <strong>Bank Name:</strong> Axis Bank<br>
-        <strong>Branch:</strong> CIDCO Branch, Aurangabad<br>
-        <strong>Branch Code :</strong> 000750<br>
-        <strong>Account No.:</strong> 924020026059043<br>
-        <strong>IFSC:</strong> UTIB0000750<br>
-        <strong>SWIFT Code:</strong> AXISINBB<br>
-        <strong>Bank Address:</strong> Ghai Chambers, Plot No. 20 CIDCO, Town Centre, Jalna Road, Aurangabad 431003, Maharashtra, India
+        <table class="bank-tbl">
+          <tr><td class="bl">Beneficiary</td><td class="bc">:</td><td>Sequenova Riverhead Biosciences Solutions</td></tr>
+          <tr><td class="bl">Bank Name</td><td class="bc">:</td><td>Axis Bank</td></tr>
+          <tr><td class="bl">Branch</td><td class="bc">:</td><td>CIDCO Branch, Aurangabad</td></tr>
+          <tr><td class="bl">Branch Code</td><td class="bc">:</td><td>000750</td></tr>
+          <tr><td class="bl">Account No.</td><td class="bc">:</td><td>924020026059043</td></tr>
+          <tr><td class="bl">IFSC</td><td class="bc">:</td><td>UTIB0000750</td></tr>
+          <tr><td class="bl">SWIFT Code</td><td class="bc">:</td><td>AXISINBB</td></tr>
+          <tr><td class="bl">Bank Address</td><td class="bc">:</td><td>Ghai Chambers, Plot No. 20 CIDCO, Town Centre, Jalna Road, Aurangabad 431003, Maharashtra, India</td></tr>
+        </table>
       </div>
 
       <div class="sig">
