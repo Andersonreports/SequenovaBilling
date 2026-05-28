@@ -964,18 +964,73 @@
 
       const amtWords = `<div class="amt-words"><strong>Amount in Word:</strong>&emsp;${n2w(grand)}</div>`;
 
-      // Paginate: page 1 has address table so fewer rows fit; continuation pages fit more
-      const LIMIT_P1 = 8;
-      const LIMIT_PC = 15;
+      // ── MEASUREMENT PASS ──
+      // Render actual elements into a hidden off-screen div using real CSS classes so
+      // offsetHeight reflects true rendered heights (multi-line descriptions, full addresses, etc.)
+      const mWrap = document.createElement('div');
+      mWrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:714px;visibility:hidden;pointer-events:none;';
+      mWrap.innerHTML = `
+        <div class="dh"><div class="dh-row1"><div></div><div class="dh-title">QUOTATION</div><div></div></div></div>
+        <table class="addr-tbl">
+          <thead><tr>
+            <th style="width:39%">Bill To</th><th style="width:35%">Ship To</th><th style="width:26%"></th>
+          </tr></thead>
+          <tbody><tr>
+            <td>${billBlock}</td><td>${shipBlock}</td>
+            <td class="date-cell"><strong>Quotation Date:</strong> ${fmtD(qdate)}<br><strong>Quotation No:</strong> ${h(qno)}</td>
+          </tr></tbody>
+        </table>
+        <table class="it">${tblHead}<tbody class="sqn-mr">${allRows.join('')}</tbody></table>
+        <div class="amt-words"><strong>Amount in Word:</strong>&emsp;x</div>
+        <div class="p2-hdr"><div class="dh-row1"><div></div><div style="font-size:20px;font-weight:bold;letter-spacing:3px">QUOTATION</div><div></div></div></div>`;
+      const mTotTbl = document.createElement('table');
+      mTotTbl.className = 'it';
+      mTotTbl.innerHTML = `<tbody>${totalsRows}</tbody>`;
+      mWrap.appendChild(mTotTbl);
+      document.body.appendChild(mWrap);
 
-      // Split allRows into buckets per page
-      const buckets = [];
-      if (!allRows.length) {
-        buckets.push([]);
-      } else {
-        buckets.push(allRows.slice(0, LIMIT_P1));
-        let rest = allRows.slice(LIMIT_P1);
-        while (rest.length) { buckets.push(rest.splice(0, LIMIT_PC)); }
+      // offsetHeight excludes CSS margins — add them manually per the stylesheet values
+      const dhH   = mWrap.querySelector('.dh').offsetHeight + 28;        // margin-bottom:28px
+      const addrH = mWrap.querySelector('.addr-tbl').offsetHeight + 12;  // margin-bottom:12px
+      const thH   = mWrap.querySelector('table.it thead').offsetHeight;
+      const totH  = mTotTbl.offsetHeight;
+      const amtH  = mWrap.querySelector('.amt-words').offsetHeight + 38; // margin 16px top + 22px bottom
+      const p2HH  = mWrap.querySelector('.p2-hdr').offsetHeight + 16;    // margin-bottom:16px
+      const rowH  = Array.from(mWrap.querySelectorAll('.sqn-mr tr')).map(r => r.offsetHeight);
+      document.body.removeChild(mWrap);
+
+      // ── PAGINATE based on measured heights ──
+      // Content area per page = 1123px total − 265px top pad − 130px bottom pad = 728px
+      const AVAIL = 728;
+      const NOTE_H = 28; // height of "Continued on next page" row
+
+      function fitCount(fromIdx, budget) {
+        let used = 0, n = 0;
+        for (let i = fromIdx; i < rowH.length; i++) {
+          if (used + rowH[i] > budget) break;
+          used += rowH[i]; n++;
+        }
+        return Math.max(n, fromIdx < rowH.length ? 1 : 0); // always advance at least 1
+      }
+
+      const buckets = []; // { start, end } index pairs
+
+      // Page 1: overhead = dh + addr-tbl + thead + totals-rows + amt-words
+      const p1Budget = AVAIL - dhH - addrH - thH - totH - amtH;
+      const p1n = allRows.length ? fitCount(0, p1Budget) : 0;
+      buckets.push({ start: 0, end: p1n });
+
+      // Continuation pages
+      let cidx = p1n;
+      while (cidx < allRows.length) {
+        const remH = rowH.slice(cidx).reduce((s, v) => s + v, 0);
+        // If all remaining rows fit on a "last" page (with totals + amtWords), use that budget
+        const lastBudget = AVAIL - p2HH - thH - totH - amtH;
+        const midBudget  = AVAIL - p2HH - thH - NOTE_H;
+        const budget = remH <= lastBudget ? lastBudget : midBudget;
+        const n = fitCount(cidx, budget);
+        buckets.push({ start: cidx, end: cidx + n });
+        cidx += n;
       }
 
       const termsPage = `
@@ -1017,11 +1072,12 @@
     </div>`;
 
       let html = '';
-      buckets.forEach((rows, idx) => {
+      buckets.forEach(({ start, end }, idx) => {
         const isLast = idx === buckets.length - 1;
         const pageNum = idx + 1;
-        const bodyContent = rows.length
-          ? rows.join('') + (isLast ? totalsRows : `<tr><td colspan="11" style="padding:8px;text-align:center;font-style:italic;color:#666">Continued on next page…</td></tr>`)
+        const pageRows = allRows.slice(start, end);
+        const bodyContent = pageRows.length
+          ? pageRows.join('') + (isLast ? totalsRows : `<tr><td colspan="11" style="padding:8px;text-align:center;font-style:italic;color:#666">Continued on next page…</td></tr>`)
           : `<tr><td colspan="11" style="padding:14px;text-align:center;color:#bbb;font-style:italic">No items — add items using the left panel</td></tr>${totalsRows}`;
 
         if (idx === 0) {
