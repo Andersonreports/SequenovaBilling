@@ -1002,32 +1002,38 @@
       // ── PAGINATE based on measured heights ──
       // Content area per page = 1123px total − 265px top pad − 130px bottom pad = 728px
       const AVAIL = 728;
-      const NOTE_H = 28; // height of "Continued on next page" row
-
       function fitCount(fromIdx, budget) {
         let used = 0, n = 0;
         for (let i = fromIdx; i < rowH.length; i++) {
           if (used + rowH[i] > budget) break;
           used += rowH[i]; n++;
         }
-        return Math.max(n, fromIdx < rowH.length ? 1 : 0); // always advance at least 1
+        return Math.max(n, fromIdx < rowH.length ? 1 : 0);
       }
 
       const buckets = []; // { start, end } index pairs
 
-      // Page 1: overhead = dh + addr-tbl + thead + totals-rows + amt-words
-      const p1Budget = AVAIL - dhH - addrH - thH - totH - amtH;
-      const p1n = allRows.length ? fitCount(0, p1Budget) : 0;
-      buckets.push({ start: 0, end: p1n });
+      // For each page: only the LAST items page needs totals+amtWords overhead.
+      // Mid pages (not the last) omit that overhead so more items fit.
+      const p1LastBudget = AVAIL - dhH - addrH - thH - totH - amtH;
+      const p1MidBudget  = AVAIL - dhH - addrH - thH;
+      const contLastBudget = AVAIL - p2HH - thH - totH - amtH;
+      const contMidBudget  = AVAIL - p2HH - thH;
+
+      // Page 1: try "last" budget first; if all items fit, done; else use "mid" budget
+      const p1LastN = allRows.length ? fitCount(0, p1LastBudget) : 0;
+      if (p1LastN >= allRows.length || !allRows.length) {
+        buckets.push({ start: 0, end: p1LastN });
+      } else {
+        const p1MidN = fitCount(0, p1MidBudget);
+        buckets.push({ start: 0, end: p1MidN });
+      }
 
       // Continuation pages
-      let cidx = p1n;
+      let cidx = buckets[0].end;
       while (cidx < allRows.length) {
         const remH = rowH.slice(cidx).reduce((s, v) => s + v, 0);
-        // If all remaining rows fit on a "last" page (with totals + amtWords), use that budget
-        const lastBudget = AVAIL - p2HH - thH - totH - amtH;
-        const midBudget  = AVAIL - p2HH - thH - NOTE_H;
-        const budget = remH <= lastBudget ? lastBudget : midBudget;
+        const budget = remH <= contLastBudget ? contLastBudget : contMidBudget;
         const n = fitCount(cidx, budget);
         buckets.push({ start: cidx, end: cidx + n });
         cidx += n;
@@ -1077,7 +1083,7 @@
         const pageNum = idx + 1;
         const pageRows = allRows.slice(start, end);
         const bodyContent = pageRows.length
-          ? pageRows.join('') + (isLast ? totalsRows : `<tr><td colspan="11" style="padding:8px;text-align:center;font-style:italic;color:#666">Continued on next page…</td></tr>`)
+          ? pageRows.join('') + (isLast ? totalsRows : '')
           : `<tr><td colspan="11" style="padding:14px;text-align:center;color:#bbb;font-style:italic">No items — add items using the left panel</td></tr>${totalsRows}`;
 
         if (idx === 0) {
@@ -1152,7 +1158,9 @@
       clonePages.forEach((p, i) => {
         p.style.width = '794px';
         p.style.minWidth = '794px';
-        p.style.minHeight = 'auto';
+        p.style.height = '1123px';
+        p.style.minHeight = '1123px';
+        p.style.overflow = 'hidden';
         p.style.margin = '0';
         p.style.boxShadow = 'none';
         if (i < clonePages.length - 1) {
