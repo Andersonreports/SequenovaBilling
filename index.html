@@ -1022,13 +1022,16 @@
       const contLastBudget = AVAIL - p2HH - thH - totH - amtH - SAFETY;
       const contMidBudget  = AVAIL - p2HH - thH - SAFETY;
 
-      // Page 1: try "last" budget first; if all items fit, done; else use "mid" budget
+      // Page 1: try "last" budget first; if all items fit, done; else use "mid" budget.
+      // If p1MidN >= allRows.length, page 1 would become the last page and MUST show totals
+      // but the mid-budget didn't reserve space for them — fall back to p1LastN in that case.
       const p1LastN = allRows.length ? fitCount(0, p1LastBudget) : 0;
       if (p1LastN >= allRows.length || !allRows.length) {
         buckets.push({ start: 0, end: p1LastN });
       } else {
         const p1MidN = fitCount(0, p1MidBudget);
-        buckets.push({ start: 0, end: p1MidN });
+        const end = p1MidN >= allRows.length ? p1LastN : p1MidN;
+        buckets.push({ start: 0, end: end });
       }
 
       // Continuation pages
