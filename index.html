@@ -1151,42 +1151,46 @@
       btn.disabled = true;
       btn.textContent = 'Generating…';
 
-      // Clone into an off-screen wrapper with exact A4 width to avoid scroll-container clipping
-      const wrapper = document.createElement('div');
-      wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:white;';
-      const clone = document.getElementById('preview').cloneNode(true);
-      clone.style.cssText = 'width:794px;display:block;';
-      const clonePages = clone.querySelectorAll('.quote-page');
-      clonePages.forEach((p, i) => {
-        p.style.width = '794px';
-        p.style.minWidth = '794px';
-        p.style.height = '1122px';
-        p.style.minHeight = '1122px';
-        p.style.overflow = 'hidden';
-        p.style.margin = '0';
-        p.style.boxShadow = 'none';
-        if (i < clonePages.length - 1) {
-          p.style.pageBreakAfter = 'always';
-          p.style.breakAfter = 'page';
-        } else {
-          p.style.pageBreakAfter = 'avoid';
-          p.style.breakAfter = 'avoid';
-        }
-      });
-      clone.querySelectorAll('.page-label').forEach(el => el.style.display = 'none');
-      wrapper.appendChild(clone);
-      document.body.appendChild(wrapper);
-
-      html2pdf().set({
+      const pageEls = Array.from(document.querySelectorAll('#preview .quote-page'));
+      const opts = {
         margin: 0,
-        filename: qno + '.pdf',
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, logging: false },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      }).from(clone).save().then(() => {
-        document.body.removeChild(wrapper);
+      };
+
+      const clonePage = (el) => {
+        const c = el.cloneNode(true);
+        c.style.width = '794px';
+        c.style.minWidth = '794px';
+        c.style.margin = '0';
+        c.style.boxShadow = 'none';
+        c.querySelectorAll('.page-label').forEach(e => e.style.display = 'none');
+        return c;
+      };
+
+      const restore = () => {
         btn.disabled = false;
         btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Generate Bill';
+      };
+
+      // Render every page independently then stitch into one PDF.
+      // This avoids the blank-page overflow that html2pdf creates when it slices
+      // a combined canvas that is 0.48 px taller than A4 (1123px vs 1122.52px).
+      html2pdf().set(opts).from(clonePage(pageEls[0])).toPdf().get('pdf').then(function(pdf) {
+        const appendNext = (i) => {
+          if (i >= pageEls.length) {
+            pdf.save(qno + '.pdf');
+            restore();
+            return;
+          }
+          html2pdf().set(opts).from(clonePage(pageEls[i])).toCanvas().get('canvas').then(function(canvas) {
+            pdf.addPage();
+            pdf.addImage(canvas.toDataURL('image/jpeg', 0.98), 'JPEG', 0, 0, 210, 297);
+            appendNext(i + 1);
+          });
+        };
+        appendNext(1);
       });
     }
 
