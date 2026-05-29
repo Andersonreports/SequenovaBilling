@@ -740,6 +740,51 @@
         </div>
       </div>
 
+      <div class="sec-title">Bank Details</div>
+      <div class="fg">
+        <label>Beneficiary</label>
+        <input type="text" id="bankBeneficiary" value="Sequenova Riverhead Biosciences Solutions" oninput="renderPreview()">
+      </div>
+      <div class="fg">
+        <label>Bank Name</label>
+        <input type="text" id="bankName" value="Axis Bank" oninput="renderPreview()">
+      </div>
+      <div class="fg">
+        <label>Branch</label>
+        <input type="text" id="bankBranch" value="CIDCO Branch, Aurangabad" oninput="renderPreview()">
+      </div>
+      <div class="frow">
+        <div class="fg">
+          <label>Branch Code</label>
+          <input type="text" id="bankBranchCode" value="000750" oninput="renderPreview()">
+        </div>
+        <div class="fg">
+          <label>Account No.</label>
+          <input type="text" id="bankAccountNo" value="924020026059043" oninput="renderPreview()">
+        </div>
+      </div>
+      <div class="frow">
+        <div class="fg">
+          <label>IFSC</label>
+          <input type="text" id="bankIfsc" value="UTIB0000750" oninput="renderPreview()">
+        </div>
+        <div class="fg">
+          <label>SWIFT Code</label>
+          <input type="text" id="bankSwift" value="AXISINBB" oninput="renderPreview()">
+        </div>
+      </div>
+      <div class="fg">
+        <label>Bank Address</label>
+        <textarea id="bankAddress" oninput="renderPreview()">Ghai Chambers, Plot No. 20 CIDCO, Town Centre, Jalna Road,
+Aurangabad 431003, Maharashtra, India</textarea>
+      </div>
+
+      <div class="sec-title">Signatory</div>
+      <div class="fg">
+        <label>Signatory Name</label>
+        <input type="text" id="signatoryName" value="Ms. Vishakha Gayke" oninput="renderPreview()">
+      </div>
+
       <div class="sec-title">Line Items</div>
       <div id="itemCards"></div>
       <button class="btn-add" onclick="addItem()">+ Add Item</button>
@@ -865,6 +910,17 @@
     function renderPreview() {
       const qdate = $v('qDate'), qno = $v('qNo').trim() || '—';
       const tc = $n('tCost'), tgr = $n('tGST');
+      const bankRows = [
+        ['Beneficiary', $v('bankBeneficiary')],
+        ['Bank Name', $v('bankName')],
+        ['Branch', $v('bankBranch')],
+        ['Branch Code', $v('bankBranchCode')],
+        ['Account No.', $v('bankAccountNo')],
+        ['IFSC', $v('bankIfsc')],
+        ['SWIFT Code', $v('bankSwift')],
+        ['Bank Address', $v('bankAddress')]
+      ].map(([label, value]) => `<tr><td class="bl">${label}</td><td class="bc">:</td><td>${h(value) || '&nbsp;'}</td></tr>`).join('');
+      const signatoryName = $v('signatoryName').trim();
 
       // Bill To
       const bn = $v('bName'), ba = $v('bAddr'), bg = $v('bGST'), bat = $v('bAttn'), bp = $v('bPhone'), be = $v('bEmail');
@@ -1064,20 +1120,13 @@
       <div class="bank-sec">
         <h3>Bank Details:</h3>
         <table class="bank-tbl">
-          <tr><td class="bl">Beneficiary</td><td class="bc">:</td><td>Sequenova Riverhead Biosciences Solutions</td></tr>
-          <tr><td class="bl">Bank Name</td><td class="bc">:</td><td>Axis Bank</td></tr>
-          <tr><td class="bl">Branch</td><td class="bc">:</td><td>CIDCO Branch, Aurangabad</td></tr>
-          <tr><td class="bl">Branch Code</td><td class="bc">:</td><td>000750</td></tr>
-          <tr><td class="bl">Account No.</td><td class="bc">:</td><td>924020026059043</td></tr>
-          <tr><td class="bl">IFSC</td><td class="bc">:</td><td>UTIB0000750</td></tr>
-          <tr><td class="bl">SWIFT Code</td><td class="bc">:</td><td>AXISINBB</td></tr>
-          <tr><td class="bl">Bank Address</td><td class="bc">:</td><td>Ghai Chambers, Plot No. 20 CIDCO, Town Centre, Jalna Road,<br>Aurangabad 431003, Maharashtra, India</td></tr>
+          ${bankRows}
         </table>
       </div>
       <div class="sig">
         Yours Truly,<br>
         For Sequenova Solutions Private Limited<br>
-        Ms. Vishakha Gayke
+        ${h(signatoryName) || '&nbsp;'}
       </div>
       <div class="ty">Thank You for Your Business !</div>
     </div>`;
