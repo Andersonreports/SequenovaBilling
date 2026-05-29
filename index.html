@@ -907,7 +907,7 @@ Aurangabad 431003, Maharashtra, India</textarea>
     // ── Number → Indian words ──
     function applyTermsTemplate(type) {
       const terms = document.getElementById('termsText');
-      if (termsTemplates[type] && terms) terms.value = termsTemplates[type];
+      if (Object.prototype.hasOwnProperty.call(termsTemplates, type) && terms) terms.value = termsTemplates[type];
       renderPreview();
     }
 
