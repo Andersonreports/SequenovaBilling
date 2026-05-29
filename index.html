@@ -141,7 +141,8 @@
     }
 
     .fg input,
-    .fg textarea {
+    .fg textarea,
+    .fg select {
       width: 100%;
       border: 1px solid #cbd5e0;
       border-radius: 5px;
@@ -153,7 +154,8 @@
     }
 
     .fg input:focus,
-    .fg textarea:focus {
+    .fg textarea:focus,
+    .fg select:focus {
       outline: none;
       border-color: #4299e1;
       box-shadow: 0 0 0 2px rgba(66, 153, 225, .2);
@@ -740,6 +742,22 @@
         </div>
       </div>
 
+      <div class="sec-title">Terms &amp; Conditions</div>
+      <div class="fg">
+        <label>Product Type</label>
+        <select id="termsType" onchange="applyTermsTemplate(this.value)">
+          <option value="reagents" selected>Reagents</option>
+          <option value="instrument">Instrument</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Terms Text</label>
+        <textarea id="termsText" oninput="renderPreview()">1. Price: All prices mentioned above are in INR
+2. Payment: 100% Advanced.
+3. Delivery: 15 working days from the date of PO received along with advanced payment. (As per Stock Availability)
+4. Expiry: One year against manufacturing</textarea>
+      </div>
+
       <div class="sec-title">Bank Details</div>
       <div class="fg">
         <label>Beneficiary</label>
@@ -813,6 +831,19 @@ Aurangabad 431003, Maharashtra, India</textarea>
     // ── State ──
     let items = [];
     let nid = 1;
+    const termsTemplates = {
+      reagents: `1. Price: All prices mentioned above are in INR
+2. Payment: 100% Advanced.
+3. Delivery: 15 working days from the date of PO received along with advanced payment. (As per Stock Availability)
+4. Expiry: One year against manufacturing`,
+      instrument: `1. Price: All prices mentioned above are in INR
+2. Payment: 100% Advanced.
+3. Delivery: 30 working days from the date of PO received along with advanced payment.
+4. Once order is placed, customer can not cancel the order under any circumstances.
+5. Once the material is delivered, it cannot be returned or accepted back under any circumstances.
+6. Warranty: One Year Standard warranty and AMC/CMC till 5 years included in the cost for Instrument as per Serial Number 1, While for instrument mention in Serial Number 2 customer will have to purchase AMC of 10L per year and needs to be renewed at the end of each year to avail the continuous support for Instrument maintenance or break-down.
+7. GST for Instrument 18%, AMC/CMC & service 18%, Reagents 5%`
+    };
 
     // ── Helpers ──
     function $v(id) { return document.getElementById(id)?.value ?? ''; }
@@ -823,6 +854,12 @@ Aurangabad 431003, Maharashtra, India</textarea>
     function fmtD(s) { if (!s) return '—'; const [y, m, d] = s.split('-'); return `${d}.${m}.${y}`; }
 
     // ── Number → Indian words ──
+    function applyTermsTemplate(type) {
+      const terms = document.getElementById('termsText');
+      if (termsTemplates[type] && terms) terms.value = termsTemplates[type];
+      renderPreview();
+    }
+
     const _o = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
       'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
     const _t = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
@@ -921,6 +958,7 @@ Aurangabad 431003, Maharashtra, India</textarea>
         ['Bank Address', $v('bankAddress')]
       ].map(([label, value]) => `<tr><td class="bl">${label}</td><td class="bc">:</td><td>${h(value) || '&nbsp;'}</td></tr>`).join('');
       const signatoryName = $v('signatoryName').trim();
+      const termsText = $v('termsText').trim();
 
       // Bill To
       const bn = $v('bName'), ba = $v('bAddr'), bg = $v('bGST'), bat = $v('bAttn'), bp = $v('bPhone'), be = $v('bEmail');
@@ -1112,10 +1150,7 @@ Aurangabad 431003, Maharashtra, India</textarea>
       </div>
       <div class="terms-sec">
         <h3>Terms &amp; Conditions:</h3>
-        1. Price: All prices mentioned above are in INR<br>
-        2. Payment: 100% Advanced.<br>
-        3. Delivery: 15 working days from the date of PO received along with advanced payment. (As per Stock Availability)<br>
-        4. Expiry: One year against manufacturing
+        ${h(termsText) || '&nbsp;'}
       </div>
       <div class="bank-sec">
         <h3>Bank Details:</h3>
