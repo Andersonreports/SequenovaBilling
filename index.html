@@ -28,14 +28,14 @@
 
     /* ── App header ── */
     .app-header {
-      background: #1B8789;
-      color: #172033;
+      background: linear-gradient(135deg, #15325c 0%, #15325c 30%, #0d7a96 68%, #0891b2 100%);
+      color: #ffffff;
       padding: 12px 26px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-top: 4px solid #26328c;
-      border-bottom: 1px solid #d8cbb6;
+      border-top: 4px solid #0c2a4e;
+      border-bottom: 1px solid #0a6880;
       box-shadow: 0 6px 18px rgba(29, 41, 57, 0.08);
       flex-shrink: 0;
     }
@@ -66,7 +66,7 @@
 
     .app-header p {
       font-size: 0.72rem;
-      color: #667085;
+      color: rgba(255,255,255,0.72);
       margin-top: 2px;
     }
 
@@ -707,9 +707,10 @@
   <div class="app-header">
     <div class="hdr-left">
       <img src="sequenovatemplate.jpeg" alt="Sequenova Riverhead" class="hdr-logo-img">
-      <div style="display:flex;flex-direction:column;justify-content:center;border-left:2px solid #d8e0ea;padding-left:14px;margin-left:4px;">
-        <h1 style="font-size:0.95rem;font-weight:700;color:#172033;letter-spacing:0.2px;">Sequenova Bill</h1>
-        <p style="font-size:0.72rem;color:#667085;margin-top:2px;">Quotation Generator</p>
+      <div
+        style="display:flex;flex-direction:column;justify-content:center;border-left:2px solid rgba(255,255,255,0.3);padding-left:14px;margin-left:4px;">
+        <h1 style="font-size:0.95rem;font-weight:700;color:#ffffff;letter-spacing:0.2px;">Sequenova Bill</h1>
+        <p style="font-size:0.72rem;color:rgba(255,255,255,0.72);margin-top:2px;">Quotation Generator</p>
       </div>
     </div>
   </div>
@@ -734,7 +735,8 @@
       <div class="sec-title">Bill To</div>
       <div class="fg">
         <label>Company / Name</label>
-        <input type="text" id="bName" placeholder="e.g. Anderson Diagnostics Services Pvt. Ltd." oninput="renderPreview()">
+        <input type="text" id="bName" placeholder="e.g. Anderson Diagnostics Services Pvt. Ltd."
+          oninput="renderPreview()">
       </div>
       <div class="fg">
         <label>Address</label>
@@ -819,7 +821,8 @@
       <div class="sec-title">Bank Details</div>
       <div class="fg">
         <label>Beneficiary</label>
-        <input type="text" id="bankBeneficiary" value="Sequenova Riverhead Biosciences Solutions" oninput="renderPreview()">
+        <input type="text" id="bankBeneficiary" value="Sequenova Riverhead Biosciences Solutions"
+          oninput="renderPreview()">
       </div>
       <div class="fg">
         <label>Bank Name</label>
@@ -1144,13 +1147,13 @@ Aurangabad 431003, Maharashtra, India</textarea>
       document.body.appendChild(mWrap);
 
       // offsetHeight excludes CSS margins — add them manually per the stylesheet values
-      const dhH   = mWrap.querySelector('.dh').offsetHeight + 28;        // margin-bottom:28px
+      const dhH = mWrap.querySelector('.dh').offsetHeight + 28;        // margin-bottom:28px
       const addrH = mWrap.querySelector('.addr-tbl').offsetHeight + 12;  // margin-bottom:12px
-      const thH   = mWrap.querySelector('table.it thead').offsetHeight;
-      const totH  = mTotTbl.offsetHeight;
-      const amtH  = mWrap.querySelector('.amt-words').offsetHeight + 38; // margin 16px top + 22px bottom
-      const p2HH  = mWrap.querySelector('.p2-hdr').offsetHeight + 16;    // margin-bottom:16px
-      const rowH  = Array.from(mWrap.querySelectorAll('.sqn-mr tr')).map(r => r.offsetHeight);
+      const thH = mWrap.querySelector('table.it thead').offsetHeight;
+      const totH = mTotTbl.offsetHeight;
+      const amtH = mWrap.querySelector('.amt-words').offsetHeight + 38; // margin 16px top + 22px bottom
+      const p2HH = mWrap.querySelector('.p2-hdr').offsetHeight + 16;    // margin-bottom:16px
+      const rowH = Array.from(mWrap.querySelectorAll('.sqn-mr tr')).map(r => r.offsetHeight);
       document.body.removeChild(mWrap);
 
       // ── PAGINATE based on measured heights ──
@@ -1171,10 +1174,10 @@ Aurangabad 431003, Maharashtra, India</textarea>
       // Mid pages (not the last) omit that overhead so more items fit.
       // SAFETY: extra 30px buffer so measurement rounding never causes overflow.
       const SAFETY = 30;
-      const p1LastBudget   = AVAIL - dhH - addrH - thH - totH - amtH - SAFETY;
-      const p1MidBudget    = AVAIL - dhH - addrH - thH - SAFETY;
+      const p1LastBudget = AVAIL - dhH - addrH - thH - totH - amtH - SAFETY;
+      const p1MidBudget = AVAIL - dhH - addrH - thH - SAFETY;
       const contLastBudget = AVAIL - p2HH - thH - totH - amtH - SAFETY;
-      const contMidBudget  = AVAIL - p2HH - thH - SAFETY;
+      const contMidBudget = AVAIL - p2HH - thH - SAFETY;
 
       // Page 1: try "last" budget first; if all items fit, done; else use "mid" budget.
       // If p1MidN >= allRows.length, page 1 would become the last page and MUST show totals
@@ -1327,14 +1330,14 @@ Aurangabad 431003, Maharashtra, India</textarea>
       // Render every page independently then stitch into one PDF.
       // This avoids the blank-page overflow that html2pdf creates when it slices
       // a combined canvas that is 0.48 px taller than A4 (1123px vs 1122.52px).
-      html2pdf().set(opts).from(clonePage(pageEls[0])).toPdf().get('pdf').then(function(pdf) {
+      html2pdf().set(opts).from(clonePage(pageEls[0])).toPdf().get('pdf').then(function (pdf) {
         const appendNext = (i) => {
           if (i >= pageEls.length) {
             pdf.save(qno + '.pdf');
             restore();
             return;
           }
-          html2pdf().set(opts).from(clonePage(pageEls[i])).toCanvas().get('canvas').then(function(canvas) {
+          html2pdf().set(opts).from(clonePage(pageEls[i])).toCanvas().get('canvas').then(function (canvas) {
             pdf.addPage();
             pdf.addImage(canvas.toDataURL('image/jpeg', 0.98), 'JPEG', 0, 0, 210, 297);
             appendNext(i + 1);
