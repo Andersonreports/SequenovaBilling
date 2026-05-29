@@ -968,7 +968,7 @@
       // Render actual elements into a hidden off-screen div using real CSS classes so
       // offsetHeight reflects true rendered heights (multi-line descriptions, full addresses, etc.)
       const mWrap = document.createElement('div');
-      mWrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:714px;visibility:hidden;pointer-events:none;';
+      mWrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:714px;visibility:hidden;pointer-events:none;font-family:"Times New Roman",Times,serif;font-size:15px;line-height:1.45;color:#111;';
       mWrap.innerHTML = `
         <div class="dh"><div class="dh-row1"><div></div><div class="dh-title">QUOTATION</div><div></div></div></div>
         <table class="addr-tbl">
@@ -1015,10 +1015,12 @@
 
       // For each page: only the LAST items page needs totals+amtWords overhead.
       // Mid pages (not the last) omit that overhead so more items fit.
-      const p1LastBudget = AVAIL - dhH - addrH - thH - totH - amtH;
-      const p1MidBudget  = AVAIL - dhH - addrH - thH;
-      const contLastBudget = AVAIL - p2HH - thH - totH - amtH;
-      const contMidBudget  = AVAIL - p2HH - thH;
+      // SAFETY: extra 30px buffer so measurement rounding never causes overflow.
+      const SAFETY = 30;
+      const p1LastBudget   = AVAIL - dhH - addrH - thH - totH - amtH - SAFETY;
+      const p1MidBudget    = AVAIL - dhH - addrH - thH - SAFETY;
+      const contLastBudget = AVAIL - p2HH - thH - totH - amtH - SAFETY;
+      const contMidBudget  = AVAIL - p2HH - thH - SAFETY;
 
       // Page 1: try "last" budget first; if all items fit, done; else use "mid" budget
       const p1LastN = allRows.length ? fitCount(0, p1LastBudget) : 0;
