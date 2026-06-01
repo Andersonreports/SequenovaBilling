@@ -644,6 +644,13 @@
       font-style: italic;
     }
 
+    .fixed-bank-block {
+      position: absolute;
+      bottom: 130px;
+      left: 40px;
+      right: 40px;
+    }
+
     /* ── Print ── */
     .compact-terms-page {
       padding-top: 248px;
@@ -696,6 +703,10 @@
     .compact-terms-page .ty {
       margin-top: 20px;
       font-size: 22px;
+    }
+
+    .compact-terms-page .fixed-bank-block {
+      bottom: 130px;
     }
 
     /* ── Scrollbar polish ── */
@@ -1295,18 +1306,20 @@ Aurangabad 431003, Maharashtra, India</textarea>
         <h3>Terms &amp; Conditions:</h3>
         ${h(termsText) || '&nbsp;'}
       </div>
-      <div class="bank-sec">
-        <h3>Bank Details:</h3>
-        <table class="bank-tbl">
-          ${bankRows}
-        </table>
+      <div class="fixed-bank-block">
+        <div class="bank-sec">
+          <h3>Bank Details:</h3>
+          <table class="bank-tbl">
+            ${bankRows}
+          </table>
+        </div>
+        <div class="sig">
+          Yours Truly,<br>
+          Sequenova Riverhead Biosciences Solutions<br>
+          ${h(signatoryName) || '&nbsp;'}
+        </div>
+        <div class="ty">Thank You for Your Business !</div>
       </div>
-      <div class="sig">
-        Yours Truly,<br>
-        For Sequenova Solutions Private Limited<br>
-        ${h(signatoryName) || '&nbsp;'}
-      </div>
-      <div class="ty">Thank You for Your Business !</div>
     </div>`;
 
       let html = '';
