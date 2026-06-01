@@ -909,46 +909,6 @@
 4. Expiry: One year against manufacturing</textarea>
       </div>
 
-      <div class="sec-title">Bank Details</div>
-      <div class="fg">
-        <label>Beneficiary</label>
-        <input type="text" id="bankBeneficiary" value="Sequenova Riverhead Biosciences Solutions"
-          oninput="renderPreview()">
-      </div>
-      <div class="fg">
-        <label>Bank Name</label>
-        <input type="text" id="bankName" value="Axis Bank" oninput="renderPreview()">
-      </div>
-      <div class="fg">
-        <label>Branch</label>
-        <input type="text" id="bankBranch" value="CIDCO Branch, Aurangabad" oninput="renderPreview()">
-      </div>
-      <div class="frow">
-        <div class="fg">
-          <label>Branch Code</label>
-          <input type="text" id="bankBranchCode" value="000750" oninput="renderPreview()">
-        </div>
-        <div class="fg">
-          <label>Account No.</label>
-          <input type="text" id="bankAccountNo" value="924020026059043" oninput="renderPreview()">
-        </div>
-      </div>
-      <div class="frow">
-        <div class="fg">
-          <label>IFSC</label>
-          <input type="text" id="bankIfsc" value="UTIB0000750" oninput="renderPreview()">
-        </div>
-        <div class="fg">
-          <label>SWIFT Code</label>
-          <input type="text" id="bankSwift" value="AXISINBB" oninput="renderPreview()">
-        </div>
-      </div>
-      <div class="fg">
-        <label>Bank Address</label>
-        <textarea id="bankAddress" oninput="renderPreview()">Ghai Chambers, Plot No. 20 CIDCO, Town Centre, Jalna Road,
-Aurangabad 431003, Maharashtra, India</textarea>
-      </div>
-
       <div class="sec-title">Signatory</div>
       <div class="fg">
         <label>Signatory Name</label>
@@ -1101,15 +1061,15 @@ Aurangabad 431003, Maharashtra, India</textarea>
       const qdate = $v('qDate'), qno = $v('qNo').trim() || '—';
       const tc = $n('tCost'), tgr = $n('tGST');
       const bankRows = [
-        ['Beneficiary', $v('bankBeneficiary')],
-        ['Bank Name', $v('bankName')],
-        ['Branch', $v('bankBranch')],
-        ['Branch Code', $v('bankBranchCode')],
-        ['Account No.', $v('bankAccountNo')],
-        ['IFSC', $v('bankIfsc')],
-        ['SWIFT Code', $v('bankSwift')],
-        ['Bank Address', $v('bankAddress')]
-      ].map(([label, value]) => `<tr><td class="bl">${label}</td><td class="bc">:</td><td>${h(value) || '&nbsp;'}</td></tr>`).join('');
+        ['Beneficiary', 'Sequenova Riverhead Biosciences Solutions'],
+        ['Bank Name', 'Axis Bank'],
+        ['Branch', 'CIDCO Branch, Aurangabad'],
+        ['Branch Code', '000750'],
+        ['Account No.', '924020026059043'],
+        ['IFSC', 'UTIB0000750'],
+        ['SWIFT Code', 'AXISINBB'],
+        ['Bank Address', 'Ghai Chambers, Plot No. 20 CIDCO, Town Centre, Jalna Road,\nAurangabad 431003, Maharashtra, India']
+      ].map(([label, value]) => `<tr><td class="bl">${label}</td><td class="bc">:</td><td>${h(value)}</td></tr>`).join('');
       const signatoryName = $v('signatoryName').trim();
       const termsText = $v('termsText').trim();
       const termsPageClass = termsText.length > 260 ? ' compact-terms-page' : '';
