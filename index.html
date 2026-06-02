@@ -340,13 +340,12 @@
     }
 
     .quote-page {
-      background: transparent;
-      isolation: isolate;
+      background: white;
       width: calc(100% - 32px);
       min-width: 794px;
       max-width: 794px;
       min-height: 1123px;
-      padding: 168px 40px 60px;
+      padding: 265px 40px 130px;
       font-family: 'Times New Roman', Times, serif;
       font-size: 15px;
       line-height: 1.45;
@@ -354,29 +353,11 @@
       color: #111;
       margin-bottom: 28px;
       position: relative;
+      background-image: url('sequenovatemplate.jpeg');
+      background-size: 100% 1123px;
+      background-repeat: no-repeat;
+      background-position: top left;
       border-radius: 2px;
-    }
-
-    /* Header layer: template shown at top, clipped before its own footer section */
-    .quote-page::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: white url('sequenovatemplate.jpeg') no-repeat 0 -28px / 100% 980px;
-      clip-path: inset(0 0 260px 0);
-      z-index: -1;
-      border-radius: 2px 2px 0 0;
-    }
-
-    /* Footer layer: white fill for lower area + template footer pinned to page bottom */
-    .quote-page::after {
-      content: '';
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 260px;
-      background: white url('sequenovatemplate.jpeg') no-repeat bottom left / 100% 860px;
-      z-index: -1;
-      border-radius: 0 0 2px 2px;
     }
 
     .page-label {
@@ -665,14 +646,14 @@
 
     .fixed-bank-block {
       position: absolute;
-      bottom: 90px;
+      bottom: 130px;
       left: 40px;
       right: 40px;
     }
 
     /* ── Print ── */
     .compact-terms-page {
-      padding-top: 200px;
+      padding-top: 248px;
     }
 
     .compact-terms-page .p2-hdr {
@@ -725,7 +706,7 @@
     }
 
     .compact-terms-page .fixed-bank-block {
-      bottom: 55px;
+      bottom: 130px;
     }
 
     /* ── Scrollbar polish ── */
@@ -788,14 +769,14 @@
         box-shadow: none;
         width: 100%;
         min-height: calc(297mm - 2cm);
-        padding: 168px 40px 60px;
+        padding: 265px 40px 130px;
         margin-bottom: 0;
         break-after: page;
         page-break-after: always;
       }
 
       .compact-terms-page {
-        padding-top: 163px;
+        padding-top: 248px;
       }
 
       .quote-page:last-child {
@@ -1268,7 +1249,7 @@ Aurangabad 431003, Maharashtra, India</textarea>
 
       // ── PAGINATE based on measured heights ──
       // Content area per page = 1123px total − 265px top pad − 130px bottom pad = 728px
-      const AVAIL = 895;
+      const AVAIL = 728;
       function fitCount(fromIdx, budget) {
         let used = 0, n = 0;
         for (let i = fromIdx; i < rowH.length; i++) {
