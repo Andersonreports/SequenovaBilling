@@ -1447,26 +1447,35 @@ Aurangabad 431003, Maharashtra, India</textarea>
         btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Generate Bill';
       };
 
-      // Render every page to its own canvas and place it on exactly one forced
-      // A4 page. Going through html2pdf's .toPdf() pagination (even for the first
-      // page) makes it slice a canvas that is 0.48px taller than A4 (1123px vs
-      // 1122.52px) into a spurious blank page, so we assemble the jsPDF manually.
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF(opts.jsPDF);
-
-      const renderPage = (i) => {
-        if (i >= pageEls.length) {
-          pdf.save(qno + '.pdf');
-          restore();
-          return;
-        }
-        html2pdf().set(opts).from(clonePage(pageEls[i])).toCanvas().get('canvas').then(function (canvas) {
-          if (i > 0) pdf.addPage();
-          pdf.addImage(canvas.toDataURL('image/jpeg', 0.98), 'JPEG', 0, 0, 210, 297);
-          renderPage(i + 1);
-        });
+      const fail = (err) => {
+        console.error('PDF generation failed:', err);
+        alert('Could not generate the bill. Please try again.');
+        restore();
       };
-      renderPage(0);
+
+      // Build the PDF from the first page through html2pdf's normal pipeline (this
+      // reliably yields a jsPDF instance), then append the remaining pages as
+      // single-page canvases. The first page can auto-paginate a spurious blank
+      // overflow page (1123px vs A4's 1122.52px), so drop any extra pages before
+      // appending the rest.
+      html2pdf().set(opts).from(clonePage(pageEls[0])).toPdf().get('pdf').then(function (pdf) {
+        while (pdf.internal.getNumberOfPages() > 1) {
+          pdf.deletePage(pdf.internal.getNumberOfPages());
+        }
+        const appendNext = (i) => {
+          if (i >= pageEls.length) {
+            pdf.save(qno + '.pdf');
+            restore();
+            return;
+          }
+          html2pdf().set(opts).from(clonePage(pageEls[i])).toCanvas().get('canvas').then(function (canvas) {
+            pdf.addPage();
+            pdf.addImage(canvas.toDataURL('image/jpeg', 0.98), 'JPEG', 0, 0, 210, 297);
+            appendNext(i + 1);
+          }).catch(fail);
+        };
+        appendNext(1);
+      }).catch(fail);
     }
 
     // ── Init ──
