@@ -528,6 +528,14 @@
       line-height: 2;
     }
 
+    .quote-meta {
+      text-align: right;
+      font-size: 15px;
+      font-weight: bold;
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+
     .bill-company {
       display: block;
       font-size: 13.4px;
@@ -1219,13 +1227,13 @@ Aurangabad 431003, Maharashtra, India</textarea>
       mWrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:714px;visibility:hidden;pointer-events:none;font-family:"Times New Roman",Times,serif;font-size:15px;line-height:1.45;color:#111;';
       mWrap.innerHTML = `
         <div class="dh"><div class="dh-row1"><div></div><div class="dh-title">QUOTATION</div><div></div></div></div>
+        <div class="quote-meta">${h(qno)}<br>${fmtD(qdate)}</div>
         <table class="addr-tbl">
           <thead><tr>
-            <th style="width:39%">Bill To</th><th style="width:42%">Ship To</th><th style="width:19%"></th>
+            <th style="width:50%">Bill To</th><th style="width:50%">Ship To</th>
           </tr></thead>
           <tbody><tr>
             <td>${billBlock}</td><td>${shipBlock}</td>
-            <td class="date-cell"><strong>Quotation Date:</strong> ${fmtD(qdate)}<br><strong>Quotation No:</strong> ${h(qno)}</td>
           </tr></tbody>
         </table>
         <table class="it">${tblHead}<tbody class="sqn-mr">${allRows.join('')}</tbody></table>
@@ -1239,7 +1247,8 @@ Aurangabad 431003, Maharashtra, India</textarea>
 
       // offsetHeight excludes CSS margins — add them manually per the stylesheet values
       const dhH = mWrap.querySelector('.dh').offsetHeight + 28;        // margin-bottom:28px
-      const addrH = mWrap.querySelector('.addr-tbl').offsetHeight + 12;  // margin-bottom:12px
+      const metaH = mWrap.querySelector('.quote-meta').offsetHeight + 8; // margin-bottom:8px
+      const addrH = mWrap.querySelector('.addr-tbl').offsetHeight + 12 + metaH;  // table margin + meta line above it
       const thH = mWrap.querySelector('table.it thead').offsetHeight;
       const totH = mTotTbl.offsetHeight;
       const amtH = mWrap.querySelector('.amt-words').offsetHeight + 38; // margin 16px top + 22px bottom
@@ -1361,25 +1370,21 @@ Aurangabad 431003, Maharashtra, India</textarea>
         <div class="dh-row1">
           <div></div>
           <div class="dh-title">QUOTATION</div>
-          <div class="dh-qno">${h(qno)}</div>
+          <div></div>
         </div>
       </div>
+      <div class="quote-meta">${h(qno)}<br>${fmtD(qdate)}</div>
       <table class="addr-tbl">
         <thead>
           <tr>
-            <th style="width:39%">Bill To</th>
-            <th style="width:42%">Ship To</th>
-            <th style="width:19%"></th>
+            <th style="width:50%">Bill To</th>
+            <th style="width:50%">Ship To</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td>${billBlock}</td>
             <td>${shipBlock}</td>
-            <td class="date-cell">
-              <strong>Quotation Date:</strong> ${fmtD(qdate)}<br>
-              <strong>Quotation No:</strong> ${h(qno)}
-            </td>
           </tr>
         </tbody>
       </table>
