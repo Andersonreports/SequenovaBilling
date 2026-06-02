@@ -443,8 +443,19 @@
     .dh-qno {
       font-size: 15px;
       font-weight: bold;
-      text-align: right;
       justify-self: end;
+      display: inline-grid;
+      grid-template-columns: auto auto;
+      column-gap: 6px;
+      row-gap: 2px;
+    }
+
+    .dh-qno .lbl {
+      text-align: right;
+    }
+
+    .dh-qno .val {
+      text-align: left;
     }
 
     /* Seller info box */
@@ -1218,7 +1229,7 @@ Aurangabad 431003, Maharashtra, India</textarea>
       const mWrap = document.createElement('div');
       mWrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:714px;visibility:hidden;pointer-events:none;font-family:"Times New Roman",Times,serif;font-size:15px;line-height:1.45;color:#111;';
       mWrap.innerHTML = `
-        <div class="dh"><div class="dh-row1"><div></div><div class="dh-title">QUOTATION</div><div class="dh-qno">Quote No: ${h(qno)}<br>Date: ${fmtD(qdate)}</div></div></div>
+        <div class="dh"><div class="dh-row1"><div></div><div class="dh-title">QUOTATION</div><div class="dh-qno"><span class="lbl">Quote No:</span><span class="val">${h(qno)}</span><span class="lbl">Date:</span><span class="val">${fmtD(qdate)}</span></div></div></div>
         <table class="addr-tbl">
           <thead><tr>
             <th style="width:50%">Bill To</th><th style="width:50%">Ship To</th>
@@ -1360,7 +1371,7 @@ Aurangabad 431003, Maharashtra, India</textarea>
         <div class="dh-row1">
           <div></div>
           <div class="dh-title">QUOTATION</div>
-          <div class="dh-qno">Quote No: ${h(qno)}<br>Date: ${fmtD(qdate)}</div>
+          <div class="dh-qno"><span class="lbl">Quote No:</span><span class="val">${h(qno)}</span><span class="lbl">Date:</span><span class="val">${fmtD(qdate)}</span></div>
         </div>
       </div>
       <table class="addr-tbl">
