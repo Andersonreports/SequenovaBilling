@@ -557,6 +557,8 @@
 
     .it .item-row td {
       background: #fde4c5;
+      padding-top: var(--row-pad, 8px);
+      padding-bottom: var(--row-pad, 8px);
     }
 
     .it .sub-row td {
@@ -1290,6 +1292,25 @@ Aurangabad 431003, Maharashtra, India</textarea>
         cidx += n;
       }
 
+      // When 3+ items are added, stretch the last page's item rows to fill any
+      // leftover vertical space so the page doesn't look empty. Only the last
+      // page can have free space (earlier pages are packed to their budget).
+      let lastRowPad = 8; // matches base .it td vertical padding
+      if (allRows.length >= 3) {
+        const last = buckets[buckets.length - 1];
+        const lastCount = last.end - last.start;
+        if (lastCount > 0) {
+          const headOverhead = buckets.length === 1 ? (dhH + addrH + thH) : (p2HH + thH);
+          const rowsH = rowH.slice(last.start, last.end).reduce((s, v) => s + v, 0);
+          const FILL_BUFFER = 24; // keep a little clearance above the footer
+          const leftover = AVAIL - headOverhead - rowsH - totH - amtH - FILL_BUFFER;
+          if (leftover > 0) {
+            // Distribute the leftover height evenly across the rows (split top/bottom).
+            lastRowPad = Math.min(8 + (leftover / lastCount) / 2, 48);
+          }
+        }
+      }
+
       const termsPage = `
     <div class="quote-page${termsPageClass}">
       <div class="page-hdr"></div>
@@ -1362,7 +1383,7 @@ Aurangabad 431003, Maharashtra, India</textarea>
           </tr>
         </tbody>
       </table>
-      <table class="it">${tblHead}<tbody>${bodyContent}</tbody></table>
+      <table class="it">${tblHead}<tbody${isLast ? ` style="--row-pad:${lastRowPad}px"` : ''}>${bodyContent}</tbody></table>
       ${isLast ? amtWords : ''}
     </div>`;
         } else {
@@ -1378,7 +1399,7 @@ Aurangabad 431003, Maharashtra, India</textarea>
           <div style="font-size:15px;font-weight:bold;text-align:right;justify-self:end">${h(qno)}</div>
         </div>
       </div>
-      <table class="it">${tblHead}<tbody>${bodyContent}</tbody></table>
+      <table class="it">${tblHead}<tbody${isLast ? ` style="--row-pad:${lastRowPad}px"` : ''}>${bodyContent}</tbody></table>
       ${isLast ? amtWords : ''}
     </div>`;
         }
