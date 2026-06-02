@@ -353,11 +353,26 @@
       color: #111;
       margin-bottom: 28px;
       position: relative;
-      background-image: url('sequenovatemplate.jpeg');
-      background-size: 100% 1123px;
-      background-repeat: no-repeat;
-      background-position: 0 0;
+      overflow: hidden;
+      isolation: isolate;
       border-radius: 2px;
+    }
+
+    .quote-page::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 176px;
+      background: url('sequenovatemplate.jpeg') no-repeat bottom / 100% 1123px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .quote-page > :not(.page-hdr) {
+      position: relative;
+      z-index: 1;
     }
 
     /* Smaller header overlay — height-clipped so template footer never shows */
@@ -367,6 +382,7 @@
       height: 168px;
       background: url('sequenovatemplate.jpeg') no-repeat 0 -18px / 100% 820px;
       pointer-events: none;
+      z-index: 0;
     }
 
     .page-label {
