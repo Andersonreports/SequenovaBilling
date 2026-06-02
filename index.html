@@ -345,7 +345,7 @@
       min-width: 794px;
       max-width: 794px;
       min-height: 1123px;
-      padding: 196px 40px 130px;
+      padding: 172px 40px 130px;
       font-family: 'Times New Roman', Times, serif;
       font-size: 15px;
       line-height: 1.45;
@@ -379,8 +379,8 @@
     .page-hdr {
       position: absolute;
       top: 0; left: 0; right: 0;
-      height: 180px;
-      background: url('Header.png') no-repeat top / 100% auto;
+      height: 158px;
+      background: url('Header.png') no-repeat top / 88% auto;
       pointer-events: none;
       z-index: 0;
     }
@@ -796,7 +796,7 @@
         box-shadow: none;
         width: 100%;
         min-height: calc(297mm - 2cm);
-        padding: 196px 40px 130px;
+        padding: 172px 40px 130px;
         margin-bottom: 0;
         break-after: page;
         page-break-after: always;
@@ -1246,8 +1246,8 @@ Aurangabad 431003, Maharashtra, India</textarea>
       document.body.removeChild(mWrap);
 
       // ── PAGINATE based on measured heights ──
-      // Content area per page = 1123px total - 196px top pad - 130px bottom pad.
-      const AVAIL = 797;
+      // Content area per page = 1123px total - 172px top pad - 130px bottom pad.
+      const AVAIL = 821;
       function fitCount(fromIdx, budget) {
         let used = 0, n = 0;
         for (let i = fromIdx; i < rowH.length; i++) {
