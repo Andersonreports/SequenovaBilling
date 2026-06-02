@@ -345,7 +345,7 @@
       min-width: 794px;
       max-width: 794px;
       min-height: 1123px;
-      padding: 224px 40px 130px;
+      padding: 196px 40px 130px;
       font-family: 'Times New Roman', Times, serif;
       font-size: 15px;
       line-height: 1.45;
@@ -386,6 +386,7 @@
     }
 
     .page-label {
+      display: none;
       position: absolute;
       top: -22px;
       left: 0;
@@ -795,7 +796,7 @@
         box-shadow: none;
         width: 100%;
         min-height: calc(297mm - 2cm);
-        padding: 224px 40px 130px;
+        padding: 196px 40px 130px;
         margin-bottom: 0;
         break-after: page;
         page-break-after: always;
@@ -935,45 +936,16 @@
 4. Expiry: One year against manufacturing</textarea>
       </div>
 
-      <div class="sec-title">Bank Details</div>
-      <div class="fg">
-        <label>Beneficiary</label>
-        <input type="text" id="bankBeneficiary" value="Sequenova Riverhead Biosciences Solutions"
-          oninput="renderPreview()">
-      </div>
-      <div class="fg">
-        <label>Bank Name</label>
-        <input type="text" id="bankName" value="Axis Bank" oninput="renderPreview()">
-      </div>
-      <div class="fg">
-        <label>Branch</label>
-        <input type="text" id="bankBranch" value="CIDCO Branch, Aurangabad" oninput="renderPreview()">
-      </div>
-      <div class="frow">
-        <div class="fg">
-          <label>Branch Code</label>
-          <input type="text" id="bankBranchCode" value="000750" oninput="renderPreview()">
-        </div>
-        <div class="fg">
-          <label>Account No.</label>
-          <input type="text" id="bankAccountNo" value="924020026059043" oninput="renderPreview()">
-        </div>
-      </div>
-      <div class="frow">
-        <div class="fg">
-          <label>IFSC</label>
-          <input type="text" id="bankIfsc" value="UTIB0000750" oninput="renderPreview()">
-        </div>
-        <div class="fg">
-          <label>SWIFT Code</label>
-          <input type="text" id="bankSwift" value="AXISINBB" oninput="renderPreview()">
-        </div>
-      </div>
-      <div class="fg">
-        <label>Bank Address</label>
-        <textarea id="bankAddress" oninput="renderPreview()">Ghai Chambers, Plot No. 20 CIDCO, Town Centre, Jalna Road,
+      <!-- Bank details are fixed and not editable from the sidebar, but still appear on the bill -->
+      <input type="hidden" id="bankBeneficiary" value="Sequenova Riverhead Biosciences Solutions">
+      <input type="hidden" id="bankName" value="Axis Bank">
+      <input type="hidden" id="bankBranch" value="CIDCO Branch, Aurangabad">
+      <input type="hidden" id="bankBranchCode" value="000750">
+      <input type="hidden" id="bankAccountNo" value="924020026059043">
+      <input type="hidden" id="bankIfsc" value="UTIB0000750">
+      <input type="hidden" id="bankSwift" value="AXISINBB">
+      <textarea id="bankAddress" style="display:none">Ghai Chambers, Plot No. 20 CIDCO, Town Centre, Jalna Road,
 Aurangabad 431003, Maharashtra, India</textarea>
-      </div>
 
       <div class="sec-title">Signatory</div>
       <div class="fg">
