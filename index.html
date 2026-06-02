@@ -353,14 +353,20 @@
       color: #111;
       margin-bottom: 28px;
       position: relative;
-      background-image:
-        linear-gradient(to bottom, transparent 720px, white 720px, white 810px, transparent 810px),
-        url('sequenovatemplate.jpeg'),
-        url('sequenovatemplate.jpeg');
-      background-size: 100% 100%, 100% 820px, 100% 1155px;
+      background-image: url('sequenovatemplate.jpeg');
+      background-size: 100% 1155px;
       background-repeat: no-repeat;
-      background-position: 0 0, 0 -18px, 0 -15px;
+      background-position: 0 -15px;
       border-radius: 2px;
+    }
+
+    /* Smaller header overlay — height-clipped so template footer never shows */
+    .page-hdr {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 178px;
+      background: url('sequenovatemplate.jpeg') no-repeat 0 -18px / 100% 820px;
+      pointer-events: none;
     }
 
     .page-label {
@@ -1301,6 +1307,7 @@ Aurangabad 431003, Maharashtra, India</textarea>
 
       const termsPage = `
     <div class="quote-page${termsPageClass}">
+      <div class="page-hdr"></div>
       <span class="page-label">PAGE ${buckets.length + 1}</span>
       <div class="p2-hdr">
         <div class="dh-row1">
@@ -1342,6 +1349,7 @@ Aurangabad 431003, Maharashtra, India</textarea>
           html += `
     <!-- ══ PAGE ${pageNum} ══ -->
     <div class="quote-page">
+      <div class="page-hdr"></div>
       <span class="page-label">PAGE ${pageNum}</span>
       <div class="dh">
         <div class="dh-row1">
@@ -1376,6 +1384,7 @@ Aurangabad 431003, Maharashtra, India</textarea>
           html += `
     <!-- ══ PAGE ${pageNum} ══ -->
     <div class="quote-page">
+      <div class="page-hdr"></div>
       <span class="page-label">PAGE ${pageNum}</span>
       <div class="p2-hdr">
         <div class="dh-row1">
