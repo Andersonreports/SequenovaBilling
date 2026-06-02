@@ -345,7 +345,7 @@
       min-width: 794px;
       max-width: 794px;
       min-height: 1123px;
-      padding: 172px 40px 60px;
+      padding: 224px 40px 130px;
       font-family: 'Times New Roman', Times, serif;
       font-size: 15px;
       line-height: 1.45;
@@ -364,8 +364,8 @@
       left: 0;
       right: 0;
       bottom: 0;
-      height: 176px;
-      background: url('sequenovatemplate.jpeg') no-repeat bottom / 100% 1123px;
+      height: 110px;
+      background: url('footer.png') no-repeat bottom / 100% auto;
       pointer-events: none;
       z-index: 0;
     }
@@ -375,12 +375,12 @@
       z-index: 1;
     }
 
-    /* Smaller header overlay — height-clipped so template footer never shows */
+    /* Header and footer are separate stationery assets */
     .page-hdr {
       position: absolute;
       top: 0; left: 0; right: 0;
-      height: 168px;
-      background: url('sequenovatemplate.jpeg') no-repeat 0 -18px / 100% 820px;
+      height: 180px;
+      background: url('Header.png') no-repeat top / 100% auto;
       pointer-events: none;
       z-index: 0;
     }
@@ -675,7 +675,7 @@
 
     /* ── Print ── */
     .compact-terms-page {
-      padding-top: 160px;
+      padding-top: 212px;
     }
 
     .compact-terms-page .p2-hdr {
@@ -795,14 +795,14 @@
         box-shadow: none;
         width: 100%;
         min-height: calc(297mm - 2cm);
-        padding: 225px 40px 90px;
+        padding: 224px 40px 130px;
         margin-bottom: 0;
         break-after: page;
         page-break-after: always;
       }
 
       .compact-terms-page {
-        padding-top: 160px;
+        padding-top: 212px;
       }
 
       .quote-page:last-child {
@@ -823,7 +823,7 @@
   <!-- ── HEADER ── -->
   <div class="app-header">
     <div class="hdr-left">
-      <img src="sequenovatemplate.jpeg" alt="Sequenova Riverhead" class="hdr-logo-img">
+      <img src="Header.png" alt="Sequenova Riverhead" class="hdr-logo-img">
       <div
         style="display:flex;flex-direction:column;justify-content:center;border-left:2px solid rgba(255,255,255,0.3);padding-left:14px;margin-left:4px;">
         <h1 style="font-size:0.95rem;font-weight:700;color:#ffffff;letter-spacing:0.2px;">Sequenova Bill</h1>
@@ -1274,8 +1274,8 @@ Aurangabad 431003, Maharashtra, India</textarea>
       document.body.removeChild(mWrap);
 
       // ── PAGINATE based on measured heights ──
-      // Content area per page = 1123px total − 265px top pad − 130px bottom pad = 728px
-      const AVAIL = 891;
+      // Content area per page = 1123px total - 224px top pad - 130px bottom pad.
+      const AVAIL = 769;
       function fitCount(fromIdx, budget) {
         let used = 0, n = 0;
         for (let i = fromIdx; i < rowH.length; i++) {
