@@ -357,14 +357,26 @@
       border-radius: 2px;
     }
 
-    /* Header layer: scaled-down template shown at top, white bg fills rest */
+    /* Header layer: template shown at top, clipped before its own footer section */
     .quote-page::before {
       content: '';
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
       background: white url('sequenovatemplate.jpeg') no-repeat 0 -28px / 100% 980px;
+      clip-path: inset(0 0 260px 0);
       z-index: -1;
-      border-radius: 2px;
+      border-radius: 2px 2px 0 0;
+    }
+
+    /* Footer layer: white fill for lower area + template footer pinned to page bottom */
+    .quote-page::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 260px;
+      background: white url('sequenovatemplate.jpeg') no-repeat bottom left / 100% 860px;
+      z-index: -1;
+      border-radius: 0 0 2px 2px;
     }
 
     .page-label {
