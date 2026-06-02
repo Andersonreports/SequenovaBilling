@@ -341,6 +341,7 @@
 
     .quote-page {
       background: white;
+      isolation: isolate;
       width: calc(100% - 32px);
       min-width: 794px;
       max-width: 794px;
@@ -353,11 +354,27 @@
       color: #111;
       margin-bottom: 28px;
       position: relative;
-      background-image: url('sequenovatemplate.jpeg');
-      background-size: 100% 1155px;
-      background-repeat: no-repeat;
-      background-position: 0 -15px;
       border-radius: 2px;
+    }
+
+    /* Header: scaled smaller, pinned to top */
+    .quote-page::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 140px;
+      background: url('sequenovatemplate.jpeg') no-repeat 0 -18px / 100% 850px;
+      z-index: -1;
+    }
+
+    /* Footer: full-size, always pinned to page bottom */
+    .quote-page::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 103px;
+      background: url('sequenovatemplate.jpeg') no-repeat bottom left / 100% 1155px;
+      z-index: -1;
     }
 
     .page-label {
