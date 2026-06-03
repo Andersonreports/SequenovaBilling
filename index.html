@@ -957,7 +957,7 @@
       <input type="hidden" id="bankAccountNo" value="500405000023">
       <input type="hidden" id="bankIfsc" value="ICIC0005004">
       <input type="hidden" id="bankSwift" value="">
-      <textarea id="bankAddress" style="display:none">ICICI Bank Ltd, , KPN Towers, No. 4/285, Viduthalai Nagar, S. Kolathur Main Road,, Chennai, Tamil Nadu, 600129</textarea>
+      <textarea id="bankAddress" style="display:none">ICICI Bank Ltd, KPN Towers, No. 4/285, Viduthalai Nagar, S. Kolathur Main Road, Chennai, Tamil Nadu, 600129</textarea>
 
       <div class="sec-title">Signatory</div>
       <div class="fg">
@@ -1113,9 +1113,9 @@
       const bankRows = [
         ['Beneficiary', $v('bankBeneficiary')],
         ['Bank Name', $v('bankName')],
-        ['Branch', $v('bankBranch')],
+        ['Branch Name', $v('bankBranch')],
         ['Account No.', $v('bankAccountNo')],
-        ['IFSC', $v('bankIfsc')],
+        ['IFSC Code', $v('bankIfsc')],
         ['Bank Address', $v('bankAddress')]
       ].map(([label, value]) => `<tr><td class="bl">${label}</td><td class="bc">:</td><td>${h(value) || '&nbsp;'}</td></tr>`).join('');
       const signatoryName = $v('signatoryName').trim();
