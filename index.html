@@ -1114,10 +1114,8 @@
         ['Beneficiary', $v('bankBeneficiary')],
         ['Bank Name', $v('bankName')],
         ['Branch', $v('bankBranch')],
-        ['Branch Code', $v('bankBranchCode')],
         ['Account No.', $v('bankAccountNo')],
         ['IFSC', $v('bankIfsc')],
-        ['SWIFT Code', $v('bankSwift')],
         ['Bank Address', $v('bankAddress')]
       ].map(([label, value]) => `<tr><td class="bl">${label}</td><td class="bc">:</td><td>${h(value) || '&nbsp;'}</td></tr>`).join('');
       const signatoryName = $v('signatoryName').trim();
