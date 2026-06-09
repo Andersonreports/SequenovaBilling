@@ -105,6 +105,36 @@
       box-shadow: 0 1px 5px rgba(22, 131, 58, 0.25);
     }
 
+    .ac-dropdown {
+      background: #fff;
+      border: 1px solid #c5d4e8;
+      border-radius: 7px;
+      box-shadow: 0 6px 24px rgba(21, 50, 92, 0.16);
+      overflow: hidden;
+      z-index: 9998;
+      max-height: 210px;
+      overflow-y: auto;
+    }
+
+    .ac-item {
+      padding: 9px 12px;
+      font-size: 0.8rem;
+      color: #2d3748;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      border-bottom: 1px solid #edf2f7;
+    }
+
+    .ac-item:last-child { border-bottom: none; }
+
+    .ac-item:hover, .ac-item.ac-hi {
+      background: #e8f0fb;
+      color: #15325c;
+      font-weight: 600;
+    }
+
     .same-as-lbl {
       display: flex;
       align-items: center;
@@ -1527,6 +1557,7 @@
 
     // ── Download PDF ──
     function downloadPDF() {
+      acRecordAll();
       const qno = (document.getElementById('qNo').value.trim() || 'quotation').replace(/[^a-zA-Z0-9_-]/g, '_');
       const btn = document.querySelector('.btn-print');
       btn.disabled = true;
@@ -1600,6 +1631,96 @@
         };
         appendNext(1);
       }).catch(fail);
+    }
+
+    // ── Autocomplete (localStorage-backed, suggests after 2 prior entries) ──
+    const AC_FIELDS = ['bName','bAddr','bGST','bAttn','bPhone','bEmail',
+                       'sName','sInst','sAddr','sAttn','sPhone','sEmail'];
+
+    function acLoad() {
+      try { return JSON.parse(localStorage.getItem('sqn_ac') || '{}'); } catch (_) { return {}; }
+    }
+    function acSave(d) { try { localStorage.setItem('sqn_ac', JSON.stringify(d)); } catch (_) {} }
+
+    function acRecordAll() {
+      const d = acLoad();
+      AC_FIELDS.forEach(id => {
+        const val = $v(id).trim();
+        if (!val) return;
+        if (!d[id]) d[id] = {};
+        d[id][val] = (d[id][val] || 0) + 1;
+      });
+      acSave(d);
+    }
+
+    function acSuggest(field, query) {
+      const q = query.trim().toLowerCase();
+      if (!q) return [];
+      const fd = acLoad()[field] || {};
+      return Object.entries(fd)
+        .filter(([v, c]) => c >= 2 && v.toLowerCase().includes(q) && v.trim() !== query.trim())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6)
+        .map(([v]) => v);
+    }
+
+    let _acEl = null;
+
+    function hideAC() { if (_acEl) { _acEl.remove(); _acEl = null; } }
+
+    function showAC(inputEl, suggestions) {
+      hideAC();
+      if (!suggestions.length) return;
+      const r = inputEl.getBoundingClientRect();
+      _acEl = document.createElement('div');
+      _acEl.className = 'ac-dropdown';
+      _acEl.style.cssText = `position:fixed;top:${r.bottom + 2}px;left:${r.left}px;width:${r.width}px;`;
+      let hiIdx = -1;
+      const items = suggestions.map((s, i) => {
+        const el = document.createElement('div');
+        el.className = 'ac-item';
+        el.textContent = s;
+        el.addEventListener('mousedown', e => {
+          e.preventDefault();
+          inputEl.value = s;
+          inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+          hideAC();
+        });
+        _acEl.appendChild(el);
+        return el;
+      });
+      // Keyboard navigation within the open dropdown
+      const onKey = e => {
+        if (!_acEl) return;
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          items[hiIdx]?.classList.remove('ac-hi');
+          hiIdx = Math.min(hiIdx + 1, items.length - 1);
+          items[hiIdx]?.classList.add('ac-hi');
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          items[hiIdx]?.classList.remove('ac-hi');
+          hiIdx = Math.max(hiIdx - 1, 0);
+          items[hiIdx]?.classList.add('ac-hi');
+        } else if (e.key === 'Enter' && hiIdx >= 0) {
+          e.preventDefault();
+          inputEl.value = suggestions[hiIdx];
+          inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+          hideAC();
+        } else if (e.key === 'Escape') {
+          hideAC();
+        }
+      };
+      document.addEventListener('keydown', onKey);
+      // Clean up key listener when dropdown is removed
+      const obs = new MutationObserver(() => {
+        if (!document.body.contains(_acEl)) {
+          document.removeEventListener('keydown', onKey);
+          obs.disconnect();
+        }
+      });
+      obs.observe(document.body, { childList: true });
+      document.body.appendChild(_acEl);
     }
 
     // ── Capture all form data as a plain object ──
@@ -1690,6 +1811,19 @@
       document.addEventListener('wheel', () => {
         if (document.activeElement?.type === 'number') document.activeElement.blur();
       }, { passive: true });
+      // Autocomplete: show on input, hide on blur/scroll/click-outside
+      const fp = document.querySelector('.form-panel');
+      fp.addEventListener('input', e => {
+        const id = e.target.id;
+        if (AC_FIELDS.includes(id)) showAC(e.target, acSuggest(id, e.target.value));
+      });
+      fp.addEventListener('blur', e => {
+        if (AC_FIELDS.includes(e.target.id)) setTimeout(hideAC, 160);
+      }, true);
+      fp.addEventListener('scroll', hideAC, { passive: true });
+      document.addEventListener('mousedown', e => {
+        if (_acEl && !_acEl.contains(e.target)) hideAC();
+      });
     });
   </script>
 </body>
