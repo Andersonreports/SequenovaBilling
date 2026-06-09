@@ -105,6 +105,26 @@
       box-shadow: 0 1px 5px rgba(22, 131, 58, 0.25);
     }
 
+    .same-as-lbl {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.78rem;
+      color: #15325c;
+      font-weight: 600;
+      margin-bottom: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .same-as-lbl input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      accent-color: #15325c;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
     .btn-load-pdf {
       width: 100%;
       background: linear-gradient(145deg, #0d6e8a, #0a5a73);
@@ -954,6 +974,10 @@
       </div>
 
       <div class="sec-title">Ship To</div>
+      <label class="same-as-lbl">
+        <input type="checkbox" id="sameAsBillTo" onchange="handleSameAsBillTo(this.checked)">
+        Same as Bill To
+      </label>
       <div class="fg">
         <label>Recipient Name / Title</label>
         <input type="text" id="sName" placeholder="e.g. Dr. Subhashree Uppangala" oninput="renderPreview()">
@@ -1176,8 +1200,28 @@
     </div>`).join('');
     }
 
+    // ── Same as Bill To ──
+    function syncShipToBillTo() {
+      if (!document.getElementById('sameAsBillTo')?.checked) return;
+      const map = [['sName','bName'],['sAddr','bAddr'],['sAttn','bAttn'],['sPhone','bPhone'],['sEmail','bEmail']];
+      map.forEach(([to, from]) => { const el = document.getElementById(to); if (el) el.value = $v(from); });
+    }
+
+    function handleSameAsBillTo(checked) {
+      const fields = ['sName','sAddr','sAttn','sPhone','sEmail'];
+      fields.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.disabled = checked;
+        el.style.opacity = checked ? '0.55' : '';
+      });
+      if (checked) syncShipToBillTo();
+      renderPreview();
+    }
+
     // ── Render quotation preview ──
     function renderPreview() {
+      syncShipToBillTo();
       const qdate = $v('qDate'), qno = $v('qNo').trim() || '—';
       const tc = $n('tCost'), tgr = $n('tGST');
       const bankRows = [
@@ -1593,6 +1637,8 @@
       }
       renderItemCards();
       renderPreview();
+      const sameCb = document.getElementById('sameAsBillTo');
+      if (sameCb) { sameCb.checked = false; handleSameAsBillTo(false); }
       document.querySelector('.form-panel').scrollTop = 0;
       showToast('Quote loaded — ready to edit.');
     }
