@@ -105,6 +105,67 @@
       box-shadow: 0 1px 5px rgba(22, 131, 58, 0.25);
     }
 
+    .btn-load-pdf {
+      width: 100%;
+      background: linear-gradient(145deg, #0d6e8a, #0a5a73);
+      color: white;
+      border: none;
+      border-bottom: 3px solid #083f52;
+      padding: 9px 0;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      margin-top: 8px;
+      box-shadow: 0 4px 14px rgba(13, 110, 138, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      transition: background .18s, transform .12s, box-shadow .18s;
+      letter-spacing: 0.3px;
+    }
+
+    .btn-load-pdf:hover {
+      background: linear-gradient(145deg, #0a5a73, #084d62);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 22px rgba(13, 110, 138, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-load-pdf:active {
+      transform: translateY(2px);
+      border-bottom-width: 1px;
+      box-shadow: 0 1px 5px rgba(13, 110, 138, 0.22);
+    }
+
+    .sqn-toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: #15325c;
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 0.83rem;
+      font-weight: 600;
+      z-index: 9999;
+      opacity: 0;
+      transition: opacity .28s, transform .28s;
+      pointer-events: none;
+      white-space: nowrap;
+      box-shadow: 0 4px 18px rgba(21, 50, 92, 0.35);
+    }
+
+    .sqn-toast.sqn-toast-in {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .sqn-toast.sqn-toast-err {
+      background: #9b1c1c;
+    }
+
     /* ── Layout ── */
     .main {
       display: flex;
@@ -968,6 +1029,15 @@
       <div class="sec-title">Line Items</div>
       <div id="itemCards"></div>
       <button class="btn-add" onclick="addItem()">+ Add Item</button>
+      <input type="file" id="pdfLoadInput" accept=".pdf" style="display:none" onchange="if(this.files[0]){handlePDFLoad(this.files[0]);this.value='';}">
+      <button class="btn-load-pdf" onclick="document.getElementById('pdfLoadInput').click()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        Load PDF
+      </button>
       <button class="btn-print" onclick="downloadPDF()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -1461,7 +1531,20 @@
         }
         const appendNext = (i) => {
           if (i >= pageEls.length) {
-            pdf.save(qno + '.pdf');
+            try {
+              const pdfBuf = pdf.output('arraybuffer');
+              const tag = '\n%SeqBillData:' + btoa(encodeURIComponent(JSON.stringify(captureFormData()))) + '\n';
+              const tagBytes = new TextEncoder().encode(tag);
+              const out = new Uint8Array(pdfBuf.byteLength + tagBytes.byteLength);
+              out.set(new Uint8Array(pdfBuf));
+              out.set(tagBytes, pdfBuf.byteLength);
+              const url = URL.createObjectURL(new Blob([out], { type: 'application/pdf' }));
+              const a = document.createElement('a');
+              a.href = url; a.download = qno + '.pdf'; a.click();
+              setTimeout(() => URL.revokeObjectURL(url), 60000);
+            } catch (_) {
+              pdf.save(qno + '.pdf');
+            }
             restore();
             return;
           }
@@ -1473,6 +1556,83 @@
         };
         appendNext(1);
       }).catch(fail);
+    }
+
+    // ── Capture all form data as a plain object ──
+    function captureFormData() {
+      return {
+        qDate: $v('qDate'), qNo: $v('qNo'),
+        bName: $v('bName'), bAddr: $v('bAddr'), bGST: $v('bGST'),
+        bAttn: $v('bAttn'), bPhone: $v('bPhone'), bEmail: $v('bEmail'),
+        sName: $v('sName'), sInst: $v('sInst'), sAddr: $v('sAddr'),
+        sAttn: $v('sAttn'), sPhone: $v('sPhone'), sEmail: $v('sEmail'),
+        tCost: $v('tCost'), tGST: $v('tGST'),
+        termsType: $v('termsType'), termsText: $v('termsText'),
+        signatoryName: $v('signatoryName'),
+        items: items.map(it => Object.assign({}, it))
+      };
+    }
+
+    // ── Restore form from a data object ──
+    function populateFormFromData(d) {
+      const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
+      set('qDate', d.qDate); set('qNo', d.qNo);
+      set('bName', d.bName); set('bAddr', d.bAddr); set('bGST', d.bGST);
+      set('bAttn', d.bAttn); set('bPhone', d.bPhone); set('bEmail', d.bEmail);
+      set('sName', d.sName); set('sInst', d.sInst); set('sAddr', d.sAddr);
+      set('sAttn', d.sAttn); set('sPhone', d.sPhone); set('sEmail', d.sEmail);
+      set('tCost', d.tCost); set('tGST', d.tGST);
+      set('termsType', d.termsType); set('termsText', d.termsText);
+      set('signatoryName', d.signatoryName);
+      if (Array.isArray(d.items) && d.items.length) {
+        items = d.items.map(it => Object.assign({}, it));
+        nid = Math.max(...items.map(i => i.id)) + 1;
+      } else {
+        items = [];
+        nid = 1;
+      }
+      renderItemCards();
+      renderPreview();
+      document.querySelector('.form-panel').scrollTop = 0;
+      showToast('Quote loaded — ready to edit.');
+    }
+
+    // ── Load PDF: extract embedded JSON tag and restore form ──
+    async function handlePDFLoad(file) {
+      const btn = document.querySelector('.btn-load-pdf');
+      btn.disabled = true;
+      btn.textContent = 'Reading…';
+      try {
+        const buf = await file.arrayBuffer();
+        // Scan the tail of the file (JSON payload is always small)
+        const tail = buf.byteLength > 16384 ? buf.slice(buf.byteLength - 16384) : buf;
+        const text = new TextDecoder('latin1').decode(tail);
+        const m = text.match(/%SeqBillData:([A-Za-z0-9+/=]+)/);
+        if (!m) {
+          showToast('No quote data found in this PDF. Re-generate the bill first.', true);
+          return;
+        }
+        const data = JSON.parse(decodeURIComponent(atob(m[1])));
+        populateFormFromData(data);
+      } catch (err) {
+        showToast('Failed to load PDF: ' + err.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Load PDF';
+      }
+    }
+
+    // ── Toast notification ──
+    function showToast(msg, isError) {
+      const t = document.createElement('div');
+      t.className = 'sqn-toast' + (isError ? ' sqn-toast-err' : '');
+      t.textContent = msg;
+      document.body.appendChild(t);
+      requestAnimationFrame(() => { t.classList.add('sqn-toast-in'); });
+      setTimeout(() => {
+        t.classList.remove('sqn-toast-in');
+        t.addEventListener('transitionend', () => t.remove(), { once: true });
+      }, 3200);
     }
 
     // ── Init ──
