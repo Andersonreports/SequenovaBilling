@@ -1535,8 +1535,8 @@
       const pageEls = Array.from(document.querySelectorAll('#preview .quote-page'));
       const opts = {
         margin: 0,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false },
+        image: { type: 'jpeg', quality: 0.82 },
+        html2canvas: { scale: 1.5, useCORS: true, logging: false },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
 
@@ -1594,7 +1594,7 @@
           }
           html2pdf().set(opts).from(clonePage(pageEls[i])).toCanvas().get('canvas').then(function (canvas) {
             pdf.addPage();
-            pdf.addImage(canvas.toDataURL('image/jpeg', 0.98), 'JPEG', 0, 0, 210, 297);
+            pdf.addImage(canvas.toDataURL('image/jpeg', 0.82), 'JPEG', 0, 0, 210, 297);
             appendNext(i + 1);
           }).catch(fail);
         };
@@ -1686,6 +1686,10 @@
       document.getElementById('qDate').value = new Date().toISOString().split('T')[0];
       renderItemCards();
       renderPreview();
+      // Prevent mouse wheel from changing number input values
+      document.addEventListener('wheel', () => {
+        if (document.activeElement?.type === 'number') document.activeElement.blur();
+      }, { passive: true });
     });
   </script>
 </body>
