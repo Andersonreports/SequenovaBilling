@@ -2089,11 +2089,30 @@
         }
         return '';
       };
-      const tcLine = lines.find(l => /Transportation\s*Cost/i.test(l.text));
-      if (tcLine) data.tCost = rowValue(tcLine) || '0';
-      const tgLine = lines.find(l => /GST.*Transport/i.test(l.text));
+      let tcLine = lines.find(l => /Transport\w*\s*Cost/i.test(l.text));
+      if (!tcLine) tcLine = lines.find(l => /Transport/i.test(l.text) && /Cost/i.test(l.text));
+      if (tcLine) {
+        let v = rowValue(tcLine);
+        if (!v) {
+          // The amount may have ended up on its own line right after the label.
+          const idx = lines.indexOf(tcLine);
+          for (let k = idx + 1; k < Math.min(idx + 3, lines.length); k++) {
+            v = lastNum(lines[k].text);
+            if (v) break;
+          }
+        }
+        data.tCost = v || '0';
+      }
+      let tgLine = lines.find(l => /GST/i.test(l.text) && /Transport/i.test(l.text));
       if (tgLine) {
-        const m = tgLine.text.match(/(\d+(?:\.\d+)?)\s*%/);
+        let m = tgLine.text.match(/(\d+(?:\.\d+)?)\s*%/);
+        if (!m) {
+          const idx = lines.indexOf(tgLine);
+          for (let k = idx + 1; k < Math.min(idx + 3, lines.length); k++) {
+            m = lines[k].text.match(/(\d+(?:\.\d+)?)\s*%/);
+            if (m) break;
+          }
+        }
         if (m) data.tGST = m[1];
       }
 
@@ -2136,6 +2155,24 @@
             if (m) { data.signatoryName = m[0].trim(); break; }
             if (/\d/.test(t) || /,\s*$/.test(t)) continue;
             data.signatoryName = t;
+            break;
+          }
+        }
+      }
+      // Some layouts have no "Thank You for Your Business" line at all — the
+      // signatory name simply follows "Yours Truly," and the company name.
+      if (!data.signatoryName) {
+        const ytIdx = lines.findIndex(l => /Yours\s*Truly/i.test(l.text));
+        if (ytIdx !== -1) {
+          for (let k = ytIdx + 1; k < lines.length; k++) {
+            let t = lines[k].text.trim();
+            if (!t) continue;
+            t = t.replace(/^.*Sequenova\s*Riverhead\s*Biosciences\s*Solutions\s*/i, '').trim();
+            if (!t || /Sequenova\s*Riverhead/i.test(t)) continue;
+            t = t.replace(/Thank\s*You.*$/i, '').trim();
+            if (!t) continue;
+            const m = t.match(NAME_RE);
+            data.signatoryName = m ? m[0].trim() : t;
             break;
           }
         }
