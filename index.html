@@ -1904,6 +1904,13 @@
         const cw = lines[headerIdx].cw;
         const midX = cw / 2;
         const billLines = [], shipLines = [];
+        // If itemHeaderIdx wasn't found (OCR missed the table header), addrEnd
+        // can run all the way to the end of the document — stop the address
+        // block as soon as we hit the items-table header, footer/terms/bank
+        // sections, a page change, or a large vertical gap, so address fields
+        // don't get polluted with table/footer text.
+        const STOP_RE = /Description|HSN|Unit\s*price|Pack\s*size|QTY\.?|Terms\s*&?\s*Conditions|Bank\s*Details|Yours\s*Truly|Amount\s*in\s*Word|Sub\s*-?\s*total|Transport|GST\s*No|^Sequenova\s*Riverhead\s*Biosciences\s*Solutions$/i;
+        let prevY1 = lines[headerIdx].y1;
         for (let i = headerIdx; i < addrEnd; i++) {
           const l = lines[i];
           let words = l.words;
@@ -1911,14 +1918,20 @@
             // Strip "Bill To"/"Ship To" header tokens, which OCR sometimes
             // merges into the same line as the first row of address content.
             words = words.filter(w => !/^(Bill|Ship|To)$/i.test(w.text));
-          } else if (/^(Bill|Ship)\s*To$/i.test(l.text.trim())) {
-            continue;
+          } else {
+            const t = l.text.trim();
+            if (/^(Bill|Ship)\s*To$/i.test(t)) continue;
+            if (l.page !== lines[headerIdx].page) break;
+            if (STOP_RE.test(t)) break;
+            if (l.y0 - prevY1 > 150) break;
+            if (/^[^A-Za-z0-9]*$/.test(t)) continue;
           }
           if (!words.length) continue;
           const leftWords = words.filter(w => w.x0 < midX);
           const rightWords = words.filter(w => w.x0 >= midX);
           if (leftWords.length) billLines.push(leftWords.map(w => w.text).join(' '));
           if (rightWords.length) shipLines.push(rightWords.map(w => w.text).join(' '));
+          prevY1 = l.y1;
         }
         parseAddressBlock(billLines, data, 'b');
         parseAddressBlock(shipLines, data, 's');
