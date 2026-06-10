@@ -1787,6 +1787,7 @@
       const buf = await file.arrayBuffer();
       const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
       const lines = [];
+      const pages = [];
       const worker = await window.Tesseract.createWorker('eng');
 
       try {
@@ -1818,6 +1819,9 @@
             .map(w => ({ text: w.text.trim(), x0: w.bbox.x0, x1: w.bbox.x1, y0: w.bbox.y0, y1: w.bbox.y1 }))
             .sort((a, b) => a.y0 - b.y0 || a.x0 - b.x0);
 
+          const pageIdx = p - 1;
+          pages.push({ cw: canvas.width, words });
+
           let cur = null;
           words.forEach(w => {
             const h = w.y1 - w.y0;
@@ -1826,7 +1830,7 @@
               cur.x1 = Math.max(cur.x1, w.x1);
               cur.y1 = Math.max(cur.y1, w.y1);
             } else {
-              cur = { words: [w], x0: w.x0, x1: w.x1, y0: w.y0, y1: w.y1, cw: canvas.width };
+              cur = { words: [w], x0: w.x0, x1: w.x1, y0: w.y0, y1: w.y1, cw: canvas.width, page: pageIdx };
               lines.push(cur);
             }
           });
@@ -1845,11 +1849,11 @@
       }
 
       console.debug('[Load PDF] OCR text:\n' + lines.map(l => l.text).join('\n'));
-      return parseOCRLines(lines);
+      return parseOCRLines(lines, pages);
     }
 
     // ── Parse OCR'd lines (with word bounding boxes) into quote data ──
-    function parseOCRLines(lines) {
+    function parseOCRLines(lines, pages) {
       const data = {
         qNo: '', qDate: '',
         bName: '', bAddr: '', bGST: '', bAttn: '', bPhone: '', bEmail: '',
@@ -1903,12 +1907,16 @@
         parseAddressBlock(shipLines, data, 's');
       }
 
-      // Items table
+      // Items table — reconstruct rows from word bounding boxes (column cells can
+      // span multiple OCR "lines" when descriptions wrap, so anchor rows on the
+      // Sr.No column instead of treating each OCR line as a row).
       if (itemHeaderIdx !== -1) {
-        let i = itemHeaderIdx + 1;
-        while (i < lines.length && /SGST/i.test(lines[i].text) && /CGST/i.test(lines[i].text) && !/^\d/.test(lines[i].text.trim())) i++;
-        const subtotalIdx = lines.findIndex((l, idx) => idx >= i && /Subtotal/i.test(l.text));
-        const end = subtotalIdx === -1 ? lines.length : subtotalIdx;
+        const pageNum = lines[itemHeaderIdx].page;
+        const header2Idx = lines.findIndex((l, idx) => idx > itemHeaderIdx && l.page === pageNum && /SGST/i.test(l.text) && /CGST/i.test(l.text));
+        const yTop = header2Idx !== -1 ? lines[header2Idx].y1 : lines[itemHeaderIdx].y1;
+        const subtotalIdx = lines.findIndex((l, idx) => idx > itemHeaderIdx && l.page === pageNum && /Subtotal/i.test(l.text));
+        const yBottom = subtotalIdx !== -1 ? lines[subtotalIdx].y0 : Infinity;
+
         const cw = lines[itemHeaderIdx].cw;
         const contentLeft = cw * 40 / 794, contentWidth = cw * 714 / 794;
         const COLS = {
@@ -1917,22 +1925,32 @@
         };
         const colX = name => [contentLeft + contentWidth * COLS[name][0], contentLeft + contentWidth * COLS[name][1]];
 
-        const rows = [];
-        let rowLines = [];
-        const [, srColEnd] = colX('sr');
-        for (let j = i; j < end; j++) {
-          const l = lines[j];
-          const isNewRow = /^\d+$/.test(l.words[0]?.text || '') && l.words[0].x0 < srColEnd + 10;
-          if (isNewRow && rowLines.length) { rows.push(rowLines); rowLines = []; }
-          rowLines.push(l);
-        }
-        if (rowLines.length) rows.push(rowLines);
+        const pageWords = (pages[pageNum] || { words: [] }).words;
+        const tableWords = pageWords.filter(w => {
+          const yc = (w.y0 + w.y1) / 2;
+          return yc > yTop && yc < yBottom;
+        });
 
-        rows.forEach(rl => {
-          const allWords = rl.flatMap(l => l.words);
+        const [, srColEnd] = colX('sr');
+        const markers = tableWords
+          .filter(w => w.x0 < srColEnd + 10 && /^[0-9lI|]{1,3}$/.test(w.text))
+          .sort((a, b) => a.y0 - b.y0);
+
+        const rowsWords = markers.map((m, idx) => {
+          const yc = (m.y0 + m.y1) / 2;
+          const prevYc = idx > 0 ? (markers[idx - 1].y0 + markers[idx - 1].y1) / 2 : -Infinity;
+          const nextYc = idx < markers.length - 1 ? (markers[idx + 1].y0 + markers[idx + 1].y1) / 2 : Infinity;
+          const rowTop = idx === 0 ? -Infinity : (prevYc + yc) / 2;
+          const rowBottom = idx === markers.length - 1 ? Infinity : (yc + nextYc) / 2;
+          return tableWords.filter(w => { const wyc = (w.y0 + w.y1) / 2; return wyc >= rowTop && wyc < rowBottom; });
+        });
+
+        rowsWords.forEach(allWords => {
           const colText = name => {
             const [a, b] = colX(name);
-            return allWords.filter(w => w.x0 >= a - 5 && w.x0 < b + 5).map(w => w.text).join(' ').trim();
+            return allWords.filter(w => w.x0 >= a - 5 && w.x0 < b + 5)
+              .sort((x, y) => x.y0 - y.y0 || x.x0 - y.x0)
+              .map(w => w.text).join(' ').trim();
           };
           const desc = colText('desc'), cat = colText('cat'), hsn = colText('hsn');
           const pack = colText('pack') || '1 Unit';
@@ -1970,12 +1988,16 @@
         data.termsText = lines.slice(termsIdx + 1, end2).map(l => l.text.trim()).filter(Boolean).join('\n');
       }
 
-      // Signatory: nearest non-empty line above "Authorized Signatory"
-      const sigIdx = lines.findIndex(l => /Authorized\s*Signatory/i.test(l.text));
-      if (sigIdx > 0) {
-        for (let k = sigIdx - 1; k >= 0; k--) {
+      // Signatory: the line above "Thank You for Your Business", skipping the
+      // "Yours Truly," and company-name lines that always precede it.
+      const tyIdx = lines.findIndex(l => /Thank\s*You.*Business/i.test(l.text));
+      if (tyIdx > 0) {
+        for (let k = tyIdx - 1; k >= 0; k--) {
           const t = lines[k].text.trim();
-          if (t) { data.signatoryName = t; break; }
+          if (!t) continue;
+          if (/Yours\s*Truly/i.test(t) || /Sequenova\s*Riverhead/i.test(t)) continue;
+          data.signatoryName = t;
+          break;
         }
       }
 
