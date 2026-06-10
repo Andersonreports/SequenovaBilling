@@ -1865,12 +1865,20 @@
       };
       const num = s => { const m = String(s || '').replace(/,/g, '').match(/-?\d+(\.\d+)?/); return m ? m[0] : ''; };
 
-      // Quote No / Date
-      const qLine = lines.find(l => /Quote\s*No/i.test(l.text));
-      if (qLine) {
-        const m1 = qLine.text.match(/Quote\s*No\s*[:.]?\s*(\S+)/i);
-        if (m1 && !/^[-—_.]+$/.test(m1[1])) data.qNo = m1[1].replace(/[^A-Za-z0-9-]/g, '');
-        const m2 = qLine.text.match(/(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})/);
+      // Quote No / Date — "Quote No: <val>" and "Date: <val>" sit on the same
+      // visual row but can be split into separate OCR "line" objects, so pull
+      // in any other lines on that row before matching.
+      const qLineIdx = lines.findIndex(l => /Quote\s*No/i.test(l.text));
+      if (qLineIdx !== -1) {
+        const qLine = lines[qLineIdx];
+        const h = qLine.y1 - qLine.y0;
+        const rowText = lines
+          .filter(l => l.page === qLine.page && Math.abs(l.y0 - qLine.y0) < h * 0.6)
+          .sort((a, b) => a.x0 - b.x0)
+          .map(l => l.text).join(' ');
+        const m1 = rowText.match(/Quote\s*No\s*[:.]?\s*(\S+)/i);
+        if (m1 && !/^[-—_.]+$/.test(m1[1]) && !/^Date/i.test(m1[1])) data.qNo = m1[1].replace(/[^A-Za-z0-9-]/g, '');
+        const m2 = rowText.match(/(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})/);
         if (m2) data.qDate = `${m2[3]}-${m2[2].padStart(2, '0')}-${m2[1].padStart(2, '0')}`;
       }
       if (!data.qDate) {
@@ -1967,15 +1975,6 @@
           }
         }
 
-        const rowsWords = markers.map((m, idx) => {
-          const yc = (m.y0 + m.y1) / 2;
-          const prevYc = idx > 0 ? (markers[idx - 1].y0 + markers[idx - 1].y1) / 2 : -Infinity;
-          const nextYc = idx < markers.length - 1 ? (markers[idx + 1].y0 + markers[idx + 1].y1) / 2 : Infinity;
-          const rowTop = idx === 0 ? -Infinity : (prevYc + yc) / 2;
-          const rowBottom = idx === markers.length - 1 ? yBottom : (yc + nextYc) / 2;
-          return tableWords.filter(w => { const wyc = (w.y0 + w.y1) / 2; return wyc >= rowTop && wyc < rowBottom; });
-        });
-
         // OCR sometimes mistakes table grid lines for stray "|"/":" characters —
         // strip these punctuation-only artifacts from cell text.
         const isBorderNoise = t => /^[|¦❘!:.]{1,3}$/.test(t);
@@ -1996,35 +1995,54 @@
           return wlines.map(wl => wl.words.sort((x, y) => x.x0 - y.x0));
         };
 
+        const cellText = (words, name) => {
+          const [a, b] = colX(name);
+          const cellWords = words.filter(w => w.x0 >= a - 5 && w.x0 < b + 5 && !isBorderNoise(w.text));
+          return groupIntoLines(cellWords).map(wl => wl.map(w => w.text).join(' ')).join(' ').trim();
+        };
+
+        // GST % cells normally read like "5%", but OCR sometimes drops the
+        // "%" symbol — fall back to a bare number (capped to a plausible
+        // GST rate) in that case.
+        const pctOf = txt => {
+          const m = txt.match(/(\d+(?:\.\d+)?)\s*%/);
+          if (m) return parseFloat(m[1]);
+          const m2 = txt.match(/^(\d+(?:\.\d+)?)$/);
+          return m2 && parseFloat(m2[1]) <= 28 ? parseFloat(m2[1]) : 0;
+        };
+
         const rows = [];
-        rowsWords.forEach(allWords => {
-          const colText = name => {
-            const [a, b] = colX(name);
-            const cellWords = allWords.filter(w => w.x0 >= a - 5 && w.x0 < b + 5 && !isBorderNoise(w.text));
-            return groupIntoLines(cellWords)
-              .map(wl => wl.map(w => w.text).join(' '))
-              .join(' ').trim();
-          };
-          const desc = colText('desc'), cat = colText('cat'), hsn = colText('hsn');
-          const pack = colText('pack') || '1 Unit';
-          const price = num(colText('price'));
-          const qty = num(colText('qty')) || '1';
-          // GST % cells normally read like "5%", but OCR sometimes drops the
-          // "%" symbol — fall back to a bare number (capped to a plausible
-          // GST rate) in that case.
-          const pctOf = txt => {
-            const m = txt.match(/(\d+(?:\.\d+)?)\s*%/);
-            if (m) return parseFloat(m[1]);
-            const m2 = txt.match(/^(\d+(?:\.\d+)?)$/);
-            return m2 && parseFloat(m2[1]) <= 28 ? parseFloat(m2[1]) : 0;
-          };
+        markers.forEach((m, idx) => {
+          const yc = (m.y0 + m.y1) / 2;
+          const prevYc = idx > 0 ? (markers[idx - 1].y0 + markers[idx - 1].y1) / 2 : -Infinity;
+          const nextYc = idx < markers.length - 1 ? (markers[idx + 1].y0 + markers[idx + 1].y1) / 2 : Infinity;
+          const rowTop = idx === 0 ? -Infinity : (prevYc + yc) / 2;
+          const rowBottom = idx === markers.length - 1 ? yBottom : (yc + nextYc) / 2;
+          const rowWords = tableWords.filter(w => { const wyc = (w.y0 + w.y1) / 2; return wyc >= rowTop && wyc < rowBottom; });
+
+          // Cat#, HSN, Pack size, Unit price, QTY, and the GST % values are
+          // single-line cells top-aligned with the Sr.No marker, so prefer
+          // the words on that same visual line — this avoids picking up
+          // digits from the Subtotal row or adjacent wrapped description
+          // lines that fall within the row's overall y-range.
+          const markerH = m.y1 - m.y0;
+          const topWords = rowWords.filter(w => Math.abs(((w.y0 + w.y1) / 2) - yc) < markerH * 0.7);
+
+          const desc = cellText(rowWords, 'desc');
+          const cat = cellText(topWords, 'cat') || cellText(rowWords, 'cat');
+          const hsn = cellText(topWords, 'hsn') || cellText(rowWords, 'hsn');
+          const pack = cellText(topWords, 'pack') || cellText(rowWords, 'pack') || '1 Unit';
+          const price = num(cellText(topWords, 'price') || cellText(rowWords, 'price'));
+          const qty = num(cellText(topWords, 'qty') || cellText(rowWords, 'qty')) || '1';
+          const sgstTxt = cellText(topWords, 'sgst') || cellText(rowWords, 'sgst');
+          const cgstTxt = cellText(topWords, 'cgst') || cellText(rowWords, 'cgst');
+          const igstTxt = cellText(topWords, 'igst') || cellText(rowWords, 'igst');
+
           if (desc || cat) {
             rows.push({
               cat, desc, hsn, pack,
               price: parseFloat(price) || 0, qty: parseFloat(qty) || 1,
-              sgst: pctOf(colText('sgst')),
-              cgst: pctOf(colText('cgst')),
-              igst: pctOf(colText('igst'))
+              sgst: pctOf(sgstTxt), cgst: pctOf(cgstTxt), igst: pctOf(igstTxt)
             });
           }
         });
@@ -2051,9 +2069,24 @@
         });
       }
 
-      // Transportation cost / GST
+      // Transportation cost / GST — the label sits in the left cell of the
+      // row and the amount in the right cell, which OCR usually reads as a
+      // separate "line" on the same row.
+      const rowValue = line => {
+        const v = num(line.text);
+        if (v) return v;
+        const h = line.y1 - line.y0;
+        const sameRow = lines
+          .filter(l => l !== line && l.page === line.page && Math.abs(l.y0 - line.y0) < h * 0.6 && l.x0 > line.x0)
+          .sort((a, b) => a.x0 - b.x0);
+        for (const l of sameRow) {
+          const m = num(l.text);
+          if (m) return m;
+        }
+        return '';
+      };
       const tcLine = lines.find(l => /Transportation\s*Cost/i.test(l.text));
-      if (tcLine) data.tCost = num(tcLine.text) || '0';
+      if (tcLine) data.tCost = rowValue(tcLine) || '0';
       const tgLine = lines.find(l => /GST.*Transport/i.test(l.text));
       if (tgLine) {
         const m = tgLine.text.match(/(\d+(?:\.\d+)?)\s*%/);
@@ -2074,19 +2107,30 @@
       // name + signatory name + "Thank You..." into a single line, so try
       // stripping those known parts from that merged line first.
       const tyIdx = lines.findIndex(l => /Thank\s*You.*Business/i.test(l.text));
+      // The signatory name is typically prefixed "Mr./Mrs./Ms./Dr." — prefer
+      // matching that even when the line is merged with bank-address text
+      // (the signatory block is right-aligned next to the bank details, so
+      // OCR can place both on the same visual line).
+      const NAME_RE = /(Mr|Mrs|Ms|Dr)\.?\s+[A-Za-z][\w.]*(\s+[A-Za-z][\w.]*)*\s*$/;
       if (tyIdx !== -1) {
         let tyText = lines[tyIdx].text.trim()
           .replace(/Thank\s*You.*$/i, '')
           .replace(/^.*Sequenova\s*Riverhead\s*Biosciences\s*Solutions/i, '')
           .replace(/^Yours\s*Truly,?/i, '')
           .trim();
-        if (tyText) {
+        const tyM = tyText.match(NAME_RE);
+        if (tyM) {
+          data.signatoryName = tyM[0].trim();
+        } else if (tyText) {
           data.signatoryName = tyText;
         } else {
           for (let k = tyIdx - 1; k >= 0; k--) {
             const t = lines[k].text.trim();
             if (!t) continue;
             if (/Yours\s*Truly/i.test(t) || /Sequenova\s*Riverhead/i.test(t)) continue;
+            const m = t.match(NAME_RE);
+            if (m) { data.signatoryName = m[0].trim(); break; }
+            if (/\d/.test(t) || /,\s*$/.test(t)) continue;
             data.signatoryName = t;
             break;
           }
