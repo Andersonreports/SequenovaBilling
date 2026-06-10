@@ -2009,16 +2009,22 @@
           const pack = colText('pack') || '1 Unit';
           const price = num(colText('price'));
           const qty = num(colText('qty')) || '1';
-          const sgstM = colText('sgst').match(/(\d+(?:\.\d+)?)\s*%/);
-          const cgstM = colText('cgst').match(/(\d+(?:\.\d+)?)\s*%/);
-          const igstM = colText('igst').match(/(\d+(?:\.\d+)?)\s*%/);
+          // GST % cells normally read like "5%", but OCR sometimes drops the
+          // "%" symbol — fall back to a bare number (capped to a plausible
+          // GST rate) in that case.
+          const pctOf = txt => {
+            const m = txt.match(/(\d+(?:\.\d+)?)\s*%/);
+            if (m) return parseFloat(m[1]);
+            const m2 = txt.match(/^(\d+(?:\.\d+)?)$/);
+            return m2 && parseFloat(m2[1]) <= 28 ? parseFloat(m2[1]) : 0;
+          };
           if (desc || cat) {
             rows.push({
               cat, desc, hsn, pack,
               price: parseFloat(price) || 0, qty: parseFloat(qty) || 1,
-              sgst: sgstM ? parseFloat(sgstM[1]) : 0,
-              cgst: cgstM ? parseFloat(cgstM[1]) : 0,
-              igst: igstM ? parseFloat(igstM[1]) : 0
+              sgst: pctOf(colText('sgst')),
+              cgst: pctOf(colText('cgst')),
+              igst: pctOf(colText('igst'))
             });
           }
         });
@@ -2062,16 +2068,28 @@
         data.termsText = lines.slice(termsIdx + 1, end2).map(l => l.text.trim()).filter(Boolean).join('\n');
       }
 
-      // Signatory: the line above "Thank You for Your Business", skipping the
-      // "Yours Truly," and company-name lines that always precede it.
+      // Signatory: normally the line above "Thank You for Your Business",
+      // skipping the "Yours Truly," and company-name lines that always
+      // precede it. OCR sometimes merges all of "Yours Truly," + company
+      // name + signatory name + "Thank You..." into a single line, so try
+      // stripping those known parts from that merged line first.
       const tyIdx = lines.findIndex(l => /Thank\s*You.*Business/i.test(l.text));
-      if (tyIdx > 0) {
-        for (let k = tyIdx - 1; k >= 0; k--) {
-          const t = lines[k].text.trim();
-          if (!t) continue;
-          if (/Yours\s*Truly/i.test(t) || /Sequenova\s*Riverhead/i.test(t)) continue;
-          data.signatoryName = t;
-          break;
+      if (tyIdx !== -1) {
+        let tyText = lines[tyIdx].text.trim()
+          .replace(/Thank\s*You.*$/i, '')
+          .replace(/^.*Sequenova\s*Riverhead\s*Biosciences\s*Solutions/i, '')
+          .replace(/^Yours\s*Truly,?/i, '')
+          .trim();
+        if (tyText) {
+          data.signatoryName = tyText;
+        } else {
+          for (let k = tyIdx - 1; k >= 0; k--) {
+            const t = lines[k].text.trim();
+            if (!t) continue;
+            if (/Yours\s*Truly/i.test(t) || /Sequenova\s*Riverhead/i.test(t)) continue;
+            data.signatoryName = t;
+            break;
+          }
         }
       }
 
@@ -2093,7 +2111,7 @@
       // The last field's value can run on into the items table header if OCR
       // merged that header into the same line — cut it off at the first
       // table-header keyword.
-      const HEADER_STOP = /\b(Sr\.?\s*No\.?|Cat\.?\s*#|Description|HSN|Pack\s*size|Unit\s*price|QTY\.?|Total\s*Cost|SGST|CGST|IGST)\b/i;
+      const HEADER_STOP = /\b(Sr\.?(\s*No\.?)?|Cat\.?\s*#|Description|HSN|Pack(\s*size)?|Unit\s*price|QTY\.?|Total(\s*(Cost|GST))?|GST|SGST|CGST|IGST)\b/i;
 
       matches.forEach((m, idx) => {
         const label = m[1].toLowerCase().replace(/\s+/g, '');
