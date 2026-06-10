@@ -1903,6 +1903,11 @@
         // still gets other column headers right.
         itemHeaderIdx = lines.findIndex((l, i) => (headerIdx === -1 || i > headerIdx) && /HSN|Pack\s*size|Unit\s*price|QTY\.?|Cat\.?\s*#/i.test(l.text));
       }
+      if (itemHeaderIdx === -1) {
+        // OCR sometimes drops the leading character of "Description" (reading
+        // it as "escription") and "Unit price" (reading it as "nit price").
+        itemHeaderIdx = lines.findIndex((l, i) => (headerIdx === -1 || i > headerIdx) && /scription|nit\s*price/i.test(l.text));
+      }
       // Last-resort bound: address blocks in this template are at most ~8
       // lines of content below the "Bill To"/"Ship To" header, so even if the
       // items-table header was never recognized, don't let the address scan
@@ -1957,8 +1962,12 @@
         // to survive — anchor on those instead.
         const header2Idx = lines.findIndex((l, idx) => idx > itemHeaderIdx && l.page === pageNum && /CGST/i.test(l.text) && /IGST/i.test(l.text));
         const yTop = header2Idx !== -1 ? lines[header2Idx].y1 : lines[itemHeaderIdx].y1;
-        const subtotalIdx = lines.findIndex((l, idx) => idx > itemHeaderIdx && l.page === pageNum && /Sub\s*-?\s*total/i.test(l.text));
-        const yBottom = subtotalIdx !== -1 ? lines[subtotalIdx].y0 : Infinity;
+        // Anchor the bottom of the items table on "Subtotal", or — if OCR
+        // missed that row entirely — on the Transportation Cost / Amount in
+        // Words rows that always follow it, so the last item's row doesn't
+        // bleed into the footer/letterhead text below.
+        const bottomIdx = lines.findIndex((l, idx) => idx > itemHeaderIdx && l.page === pageNum && /Sub\s*-?\s*total|Transportatio|Amount\s*in\s*Word/i.test(l.text));
+        const yBottom = bottomIdx !== -1 ? lines[bottomIdx].y0 : Infinity;
 
         const cw = lines[itemHeaderIdx].cw;
         const contentLeft = cw * 40 / 794, contentWidth = cw * 714 / 794;
