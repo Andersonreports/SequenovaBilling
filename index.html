@@ -1884,6 +1884,13 @@
       // Bill To / Ship To block — anchor on whichever header OCR managed to read
       let headerIdx = lines.findIndex(l => /Bill\s*To/i.test(l.text));
       if (headerIdx === -1) headerIdx = lines.findIndex(l => /Ship\s*To/i.test(l.text));
+      if (headerIdx === -1) {
+        // OCR missed the "Bill To"/"Ship To" header text entirely — fall back to
+        // anchoring just above the first "Address:" line so the address fields
+        // still get extracted (the name lines above it will be missed).
+        const addrIdx = lines.findIndex(l => /Add?ress\s*[:.]?/i.test(l.text));
+        if (addrIdx > 0) headerIdx = addrIdx - 1;
+      }
 
       let itemHeaderIdx = lines.findIndex((l, i) => (headerIdx === -1 || i > headerIdx) && /Description/i.test(l.text));
       if (itemHeaderIdx === -1) {
@@ -1945,10 +1952,14 @@
           return tableWords.filter(w => { const wyc = (w.y0 + w.y1) / 2; return wyc >= rowTop && wyc < rowBottom; });
         });
 
+        // OCR sometimes mistakes table grid lines for stray "|"/":" characters —
+        // strip these punctuation-only artifacts from cell text.
+        const isBorderNoise = t => /^[|¦❘!:.]{1,3}$/.test(t);
+
         rowsWords.forEach(allWords => {
           const colText = name => {
             const [a, b] = colX(name);
-            return allWords.filter(w => w.x0 >= a - 5 && w.x0 < b + 5)
+            return allWords.filter(w => w.x0 >= a - 5 && w.x0 < b + 5 && !isBorderNoise(w.text))
               .sort((x, y) => x.y0 - y.y0 || x.x0 - y.x0)
               .map(w => w.text).join(' ').trim();
           };
