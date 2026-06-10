@@ -1996,6 +1996,7 @@
           return wlines.map(wl => wl.words.sort((x, y) => x.x0 - y.x0));
         };
 
+        const rows = [];
         rowsWords.forEach(allWords => {
           const colText = name => {
             const [a, b] = colX(name);
@@ -2012,14 +2013,35 @@
           const cgstM = colText('cgst').match(/(\d+(?:\.\d+)?)\s*%/);
           const igstM = colText('igst').match(/(\d+(?:\.\d+)?)\s*%/);
           if (desc || cat) {
-            data.items.push({
-              id: data.items.length + 1, cat, desc, hsn, pack,
+            rows.push({
+              cat, desc, hsn, pack,
               price: parseFloat(price) || 0, qty: parseFloat(qty) || 1,
               sgst: sgstM ? parseFloat(sgstM[1]) : 0,
               cgst: cgstM ? parseFloat(cgstM[1]) : 0,
               igst: igstM ? parseFloat(igstM[1]) : 0
             });
           }
+        });
+
+        // Below the items table the page contains the company's letterhead
+        // address and the "Amount in Words" line; if a stray Sr.No-like
+        // marker is found there it produces a bogus extra row. Detect and
+        // drop such rows, salvaging any price/qty they picked up for the
+        // preceding real item if that item's price wasn't found.
+        const SPURIOUS_RE = /Sequenova|Riverhead|Amount\s*in\s*Word|Rupees\s+\w+\s+(Lakh|Crore|Thousand|Hundred)/i;
+        rows.forEach((row, idx) => {
+          const text = `${row.cat} ${row.desc} ${row.hsn} ${row.pack}`;
+          if (SPURIOUS_RE.test(text)) {
+            const prev = rows[idx - 1];
+            if (prev && !prev.price && row.price) {
+              prev.price = row.price;
+              prev.qty = row.qty;
+            }
+            row.spurious = true;
+          }
+        });
+        rows.filter(row => !row.spurious).forEach(row => {
+          data.items.push({ id: data.items.length + 1, ...row });
         });
       }
 
