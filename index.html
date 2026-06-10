@@ -1787,40 +1787,62 @@
       const buf = await file.arrayBuffer();
       const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
       const lines = [];
+      const worker = await window.Tesseract.createWorker('eng');
 
-      for (let p = 1; p <= pdf.numPages; p++) {
-        if (btn) btn.textContent = `OCR page ${p}/${pdf.numPages}…`;
-        const page = await pdf.getPage(p);
-        const viewport = page.getViewport({ scale: 2 });
-        const canvas = document.createElement('canvas');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+      try {
+        for (let p = 1; p <= pdf.numPages; p++) {
+          if (btn) btn.textContent = `OCR page ${p}/${pdf.numPages}…`;
+          const page = await pdf.getPage(p);
+          const viewport = page.getViewport({ scale: 2 });
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
 
-        const { data: ocr } = await window.Tesseract.recognize(canvas, 'eng');
-        const words = (ocr.words || [])
-          .filter(w => w.text && w.text.trim())
-          .map(w => ({ text: w.text.trim(), x0: w.bbox.x0, x1: w.bbox.x1, y0: w.bbox.y0, y1: w.bbox.y1 }))
-          .sort((a, b) => a.y0 - b.y0 || a.x0 - b.x0);
+          const { data: ocr } = await worker.recognize(canvas, {}, { blocks: true, text: true });
 
-        let cur = null;
-        words.forEach(w => {
-          const h = w.y1 - w.y0;
-          if (cur && Math.abs(w.y0 - cur.y0) < h * 0.6) {
-            cur.words.push(w);
-            cur.x1 = Math.max(cur.x1, w.x1);
-            cur.y1 = Math.max(cur.y1, w.y1);
-          } else {
-            cur = { words: [w], x0: w.x0, x1: w.x1, y0: w.y0, y1: w.y1, cw: canvas.width };
-            lines.push(cur);
-          }
-        });
+          // Tesseract.js v5 nests word data under blocks > paragraphs > lines > words.
+          // Fall back to a flat data.words array in case an older build is loaded.
+          let words = [];
+          (ocr.blocks || []).forEach(block => {
+            (block.paragraphs || []).forEach(para => {
+              (para.lines || []).forEach(line => {
+                (line.words || []).forEach(w => words.push(w));
+              });
+            });
+          });
+          if (!words.length && Array.isArray(ocr.words)) words = ocr.words;
+
+          words = words
+            .filter(w => w.text && w.text.trim())
+            .map(w => ({ text: w.text.trim(), x0: w.bbox.x0, x1: w.bbox.x1, y0: w.bbox.y0, y1: w.bbox.y1 }))
+            .sort((a, b) => a.y0 - b.y0 || a.x0 - b.x0);
+
+          let cur = null;
+          words.forEach(w => {
+            const h = w.y1 - w.y0;
+            if (cur && Math.abs(w.y0 - cur.y0) < h * 0.6) {
+              cur.words.push(w);
+              cur.x1 = Math.max(cur.x1, w.x1);
+              cur.y1 = Math.max(cur.y1, w.y1);
+            } else {
+              cur = { words: [w], x0: w.x0, x1: w.x1, y0: w.y0, y1: w.y1, cw: canvas.width };
+              lines.push(cur);
+            }
+          });
+        }
+      } finally {
+        await worker.terminate();
       }
 
       lines.forEach(l => {
         l.words.sort((a, b) => a.x0 - b.x0);
         l.text = l.words.map(w => w.text).join(' ');
       });
+
+      if (!lines.length) {
+        throw new Error('OCR could not detect any text in this PDF.');
+      }
 
       return parseOCRLines(lines);
     }
@@ -2009,6 +2031,11 @@
         // Fallback: OCR extraction for PDFs generated before this feature existed
         showToast('No embedded data found — extracting via OCR (older PDF). This may take a minute…');
         const data = await extractViaOCR(file, btn);
+        const hasData = data.qNo || data.bName || data.sName || data.bAddr || data.sAddr || data.items.length;
+        if (!hasData) {
+          showToast('OCR ran but could not recognize the quote layout in this PDF. Try a clearer/non-scanned copy.', true);
+          return;
+        }
         populateFormFromData(data, 'Extracted via OCR — please double-check all fields, especially numbers and GST rates.');
       } catch (err) {
         showToast('Failed to load PDF: ' + err.message, true);
