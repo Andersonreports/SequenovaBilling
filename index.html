@@ -1739,7 +1739,7 @@
     }
 
     // ── Restore form from a data object ──
-    function populateFormFromData(d) {
+    function populateFormFromData(d, msg) {
       const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
       set('qDate', d.qDate); set('qNo', d.qNo);
       set('bName', d.bName); set('bAddr', d.bAddr); set('bGST', d.bGST);
@@ -1761,12 +1761,236 @@
       const sameCb = document.getElementById('sameAsBillTo');
       if (sameCb) { sameCb.checked = false; handleSameAsBillTo(false); }
       document.querySelector('.form-panel').scrollTop = 0;
-      showToast('Quote loaded — ready to edit.');
+      showToast(msg || 'Quote loaded — ready to edit.');
     }
 
-    // ── Load PDF: extract embedded JSON tag and restore form ──
+    // ── Lazy-load an external script once ──
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        if (document.querySelector(`script[src="${src}"]`)) return resolve();
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = () => resolve();
+        s.onerror = () => reject(new Error('Failed to load ' + src));
+        document.head.appendChild(s);
+      });
+    }
+
+    // ── OCR fallback: extract quote data from a PDF with no embedded data ──
+    async function extractViaOCR(file, btn) {
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+      await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js');
+      if (!window.pdfjsLib.GlobalWorkerOptions.workerSrc) {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      }
+
+      const buf = await file.arrayBuffer();
+      const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+      const lines = [];
+
+      for (let p = 1; p <= pdf.numPages; p++) {
+        if (btn) btn.textContent = `OCR page ${p}/${pdf.numPages}…`;
+        const page = await pdf.getPage(p);
+        const viewport = page.getViewport({ scale: 2 });
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+
+        const { data: ocr } = await window.Tesseract.recognize(canvas, 'eng');
+        const words = (ocr.words || [])
+          .filter(w => w.text && w.text.trim())
+          .map(w => ({ text: w.text.trim(), x0: w.bbox.x0, x1: w.bbox.x1, y0: w.bbox.y0, y1: w.bbox.y1 }))
+          .sort((a, b) => a.y0 - b.y0 || a.x0 - b.x0);
+
+        let cur = null;
+        words.forEach(w => {
+          const h = w.y1 - w.y0;
+          if (cur && Math.abs(w.y0 - cur.y0) < h * 0.6) {
+            cur.words.push(w);
+            cur.x1 = Math.max(cur.x1, w.x1);
+            cur.y1 = Math.max(cur.y1, w.y1);
+          } else {
+            cur = { words: [w], x0: w.x0, x1: w.x1, y0: w.y0, y1: w.y1, cw: canvas.width };
+            lines.push(cur);
+          }
+        });
+      }
+
+      lines.forEach(l => {
+        l.words.sort((a, b) => a.x0 - b.x0);
+        l.text = l.words.map(w => w.text).join(' ');
+      });
+
+      return parseOCRLines(lines);
+    }
+
+    // ── Parse OCR'd lines (with word bounding boxes) into quote data ──
+    function parseOCRLines(lines) {
+      const data = {
+        qNo: '', qDate: '',
+        bName: '', bAddr: '', bGST: '', bAttn: '', bPhone: '', bEmail: '',
+        sName: '', sInst: '', sAddr: '', sAttn: '', sPhone: '', sEmail: '',
+        tCost: '0', tGST: '18',
+        termsType: 'other', termsText: '',
+        signatoryName: '',
+        items: []
+      };
+      const num = s => { const m = String(s || '').replace(/,/g, '').match(/-?\d+(\.\d+)?/); return m ? m[0] : ''; };
+
+      // Quote No / Date
+      const qLine = lines.find(l => /Quote\s*No/i.test(l.text));
+      if (qLine) {
+        const m1 = qLine.text.match(/Quote\s*No\s*[:.]?\s*(\S+)/i);
+        if (m1) data.qNo = m1[1].replace(/[^A-Za-z0-9-]/g, '');
+        const m2 = qLine.text.match(/(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})/);
+        if (m2) data.qDate = `${m2[3]}-${m2[2].padStart(2, '0')}-${m2[1].padStart(2, '0')}`;
+      }
+
+      // Bill To / Ship To block
+      const billShipIdx = lines.findIndex(l => /Bill\s*To/i.test(l.text) && /Ship\s*To/i.test(l.text));
+      let itemHeaderIdx = lines.findIndex((l, i) => i > billShipIdx && /Cat/i.test(l.text) && /Description/i.test(l.text));
+      if (itemHeaderIdx === -1) itemHeaderIdx = lines.findIndex((l, i) => i > billShipIdx && /Description/i.test(l.text));
+
+      if (billShipIdx !== -1 && itemHeaderIdx !== -1) {
+        const cw = lines[billShipIdx].cw;
+        const contentLeft = cw * 40 / 794, contentRight = cw * 754 / 794;
+        const midX = (contentLeft + contentRight) / 2;
+        const billLines = [], shipLines = [];
+        for (let i = billShipIdx + 1; i < itemHeaderIdx; i++) {
+          const l = lines[i];
+          const leftWords = l.words.filter(w => w.x0 < midX);
+          const rightWords = l.words.filter(w => w.x0 >= midX);
+          if (leftWords.length) billLines.push(leftWords.map(w => w.text).join(' '));
+          if (rightWords.length) shipLines.push(rightWords.map(w => w.text).join(' '));
+        }
+        parseAddressBlock(billLines, data, 'b');
+        parseAddressBlock(shipLines, data, 's');
+      }
+
+      // Items table
+      if (itemHeaderIdx !== -1) {
+        let i = itemHeaderIdx + 1;
+        while (i < lines.length && /SGST/i.test(lines[i].text) && /CGST/i.test(lines[i].text) && !/^\d/.test(lines[i].text.trim())) i++;
+        const subtotalIdx = lines.findIndex((l, idx) => idx >= i && /Subtotal/i.test(l.text));
+        const end = subtotalIdx === -1 ? lines.length : subtotalIdx;
+        const cw = lines[itemHeaderIdx].cw;
+        const contentLeft = cw * 40 / 794, contentWidth = cw * 714 / 794;
+        const COLS = {
+          sr: [0, 0.04], cat: [0.04, 0.12], desc: [0.12, 0.33], hsn: [0.33, 0.41], pack: [0.41, 0.48],
+          price: [0.48, 0.57], qty: [0.57, 0.62], sgst: [0.72, 0.81], cgst: [0.81, 0.90], igst: [0.90, 1.0]
+        };
+        const colX = name => [contentLeft + contentWidth * COLS[name][0], contentLeft + contentWidth * COLS[name][1]];
+
+        const rows = [];
+        let rowLines = [];
+        const [, srColEnd] = colX('sr');
+        for (let j = i; j < end; j++) {
+          const l = lines[j];
+          const isNewRow = /^\d+$/.test(l.words[0]?.text || '') && l.words[0].x0 < srColEnd + 10;
+          if (isNewRow && rowLines.length) { rows.push(rowLines); rowLines = []; }
+          rowLines.push(l);
+        }
+        if (rowLines.length) rows.push(rowLines);
+
+        rows.forEach(rl => {
+          const allWords = rl.flatMap(l => l.words);
+          const colText = name => {
+            const [a, b] = colX(name);
+            return allWords.filter(w => w.x0 >= a - 5 && w.x0 < b + 5).map(w => w.text).join(' ').trim();
+          };
+          const desc = colText('desc'), cat = colText('cat'), hsn = colText('hsn');
+          const pack = colText('pack') || '1 Unit';
+          const price = num(colText('price'));
+          const qty = num(colText('qty')) || '1';
+          const sgstM = colText('sgst').match(/(\d+(?:\.\d+)?)\s*%/);
+          const cgstM = colText('cgst').match(/(\d+(?:\.\d+)?)\s*%/);
+          const igstM = colText('igst').match(/(\d+(?:\.\d+)?)\s*%/);
+          if (desc || cat) {
+            data.items.push({
+              id: data.items.length + 1, cat, desc, hsn, pack,
+              price: parseFloat(price) || 0, qty: parseFloat(qty) || 1,
+              sgst: sgstM ? parseFloat(sgstM[1]) : 0,
+              cgst: cgstM ? parseFloat(cgstM[1]) : 0,
+              igst: igstM ? parseFloat(igstM[1]) : 0
+            });
+          }
+        });
+      }
+
+      // Transportation cost / GST
+      const tcLine = lines.find(l => /Transportation\s*Cost/i.test(l.text));
+      if (tcLine) data.tCost = num(tcLine.text) || '0';
+      const tgLine = lines.find(l => /GST.*Transport/i.test(l.text));
+      if (tgLine) {
+        const m = tgLine.text.match(/(\d+(?:\.\d+)?)\s*%/);
+        if (m) data.tGST = m[1];
+      }
+
+      // Terms & Conditions
+      const termsIdx = lines.findIndex(l => /Terms.*Conditions/i.test(l.text));
+      if (termsIdx !== -1) {
+        const bankIdx = lines.findIndex((l, idx) => idx > termsIdx && /Bank\s*Details|Beneficiary/i.test(l.text));
+        const end2 = bankIdx === -1 ? lines.length : bankIdx;
+        data.termsText = lines.slice(termsIdx + 1, end2).map(l => l.text.trim()).filter(Boolean).join('\n');
+      }
+
+      // Signatory: nearest non-empty line above "Authorized Signatory"
+      const sigIdx = lines.findIndex(l => /Authorized\s*Signatory/i.test(l.text));
+      if (sigIdx > 0) {
+        for (let k = sigIdx - 1; k >= 0; k--) {
+          const t = lines[k].text.trim();
+          if (t) { data.signatoryName = t; break; }
+        }
+      }
+
+      return data;
+    }
+
+    // ── Split an address-table column's lines into labeled fields ──
+    function parseAddressBlock(lines, data, prefix) {
+      const titleLines = [];
+      let current = null;
+      lines.forEach(text => {
+        const t = text.trim();
+        if (!t) return;
+        let m;
+        if (m = t.match(/^Add?ress\s*[:.]?\s*(.*)/i)) {
+          data[prefix + 'Addr'] = m[1].trim();
+          current = 'addr';
+        } else if (m = t.match(/^GSTIN\s*[:.]?\s*(.*)/i)) {
+          data.bGST = m[1].trim();
+          current = null;
+        } else if (m = t.match(/^Attention\s*[:.]?\s*(.*)/i)) {
+          data[prefix + 'Attn'] = m[1].trim();
+          current = null;
+        } else if (m = t.match(/^Phone\s*(?:Number)?\s*[:.]?\s*(.*)/i)) {
+          data[prefix + 'Phone'] = (m[1] || '').trim();
+          current = null;
+        } else if (m = t.match(/^Email\s*[:.]?\s*(.*)/i)) {
+          data[prefix + 'Email'] = m[1].trim();
+          current = null;
+        } else if (current === 'addr') {
+          data[prefix + 'Addr'] = (data[prefix + 'Addr'] + ' ' + t).trim();
+        } else {
+          titleLines.push(t);
+        }
+      });
+      if (prefix === 'b') {
+        data.bName = titleLines[0] || '';
+      } else {
+        data.sName = titleLines[0] || '';
+        data.sInst = titleLines.slice(1).join(' ') || '';
+      }
+    }
+
+    // ── Load PDF: extract embedded JSON tag, or OCR-fallback for older PDFs ──
     async function handlePDFLoad(file) {
       const btn = document.querySelector('.btn-load-pdf');
+      const restoreBtn = () => {
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Load PDF';
+      };
       btn.disabled = true;
       btn.textContent = 'Reading…';
       try {
@@ -1775,17 +1999,21 @@
         const tail = buf.byteLength > 16384 ? buf.slice(buf.byteLength - 16384) : buf;
         const text = new TextDecoder('latin1').decode(tail);
         const m = text.match(/%SeqBillData:([A-Za-z0-9+/=]+)/);
-        if (!m) {
-          showToast('No quote data found in this PDF. Re-generate the bill first.', true);
+        if (m) {
+          const data = JSON.parse(decodeURIComponent(atob(m[1])));
+          populateFormFromData(data);
+          restoreBtn();
           return;
         }
-        const data = JSON.parse(decodeURIComponent(atob(m[1])));
-        populateFormFromData(data);
+
+        // Fallback: OCR extraction for PDFs generated before this feature existed
+        showToast('No embedded data found — extracting via OCR (older PDF). This may take a minute…');
+        const data = await extractViaOCR(file, btn);
+        populateFormFromData(data, 'Extracted via OCR — please double-check all fields, especially numbers and GST rates.');
       } catch (err) {
         showToast('Failed to load PDF: ' + err.message, true);
       } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Load PDF';
+        restoreBtn();
       }
     }
 
