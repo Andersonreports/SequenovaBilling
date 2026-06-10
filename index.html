@@ -1898,7 +1898,18 @@
       if (itemHeaderIdx === -1) {
         itemHeaderIdx = lines.findIndex((l, i) => (headerIdx === -1 || i > headerIdx) && /Sr\.?\s*No/i.test(l.text) && /Cat/i.test(l.text));
       }
-      const addrEnd = itemHeaderIdx === -1 ? lines.length : itemHeaderIdx;
+      if (itemHeaderIdx === -1) {
+        // OCR sometimes garbles "Description"/"Sr.No" beyond recognition but
+        // still gets other column headers right.
+        itemHeaderIdx = lines.findIndex((l, i) => (headerIdx === -1 || i > headerIdx) && /HSN|Pack\s*size|Unit\s*price|QTY\.?|Cat\.?\s*#/i.test(l.text));
+      }
+      // Last-resort bound: address blocks in this template are at most ~8
+      // lines of content below the "Bill To"/"Ship To" header, so even if the
+      // items-table header was never recognized, don't let the address scan
+      // run past that into the table/footer.
+      const addrEnd = itemHeaderIdx === -1
+        ? (headerIdx === -1 ? lines.length : Math.min(lines.length, headerIdx + 9))
+        : itemHeaderIdx;
 
       if (headerIdx !== -1) {
         const cw = lines[headerIdx].cw;
@@ -1909,7 +1920,7 @@
         // block as soon as we hit the items-table header, footer/terms/bank
         // sections, a page change, or a large vertical gap, so address fields
         // don't get polluted with table/footer text.
-        const STOP_RE = /Description|HSN|Unit\s*price|Pack\s*size|QTY\.?|Terms\s*&?\s*Conditions|Bank\s*Details|Yours\s*Truly|Amount\s*in\s*Word|Sub\s*-?\s*total|Transport|GST\s*No|^Sequenova\s*Riverhead\s*Biosciences\s*Solutions$/i;
+        const STOP_RE = /Description|HSN|Unit\s*price|Pack\s*size|QTY\.?|Cat\.?\s*#|Terms\s*&?\s*Conditions|Bank\s*Details|Yours\s*Truly|Amount\s*in\s*Word|Sub\s*-?\s*total|Transport|GST\s*No|^Sequenova\s*Riverhead\s*Biosciences\s*Solutions$|\d{1,3}(?:,\d{2,3})+|\|\s*\|/i;
         let prevY1 = lines[headerIdx].y1;
         for (let i = headerIdx; i < addrEnd; i++) {
           const l = lines[i];
