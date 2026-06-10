@@ -1844,6 +1844,7 @@
         throw new Error('OCR could not detect any text in this PDF.');
       }
 
+      console.debug('[Load PDF] OCR text:\n' + lines.map(l => l.text).join('\n'));
       return parseOCRLines(lines);
     }
 
@@ -1864,23 +1865,35 @@
       const qLine = lines.find(l => /Quote\s*No/i.test(l.text));
       if (qLine) {
         const m1 = qLine.text.match(/Quote\s*No\s*[:.]?\s*(\S+)/i);
-        if (m1) data.qNo = m1[1].replace(/[^A-Za-z0-9-]/g, '');
+        if (m1 && !/^[-—_.]+$/.test(m1[1])) data.qNo = m1[1].replace(/[^A-Za-z0-9-]/g, '');
         const m2 = qLine.text.match(/(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})/);
         if (m2) data.qDate = `${m2[3]}-${m2[2].padStart(2, '0')}-${m2[1].padStart(2, '0')}`;
       }
+      if (!data.qDate) {
+        const dLine = lines.find(l => /Date\s*[:.]?\s*\d{1,2}[.\/-]\d{1,2}[.\/-]\d{4}/i.test(l.text));
+        if (dLine) {
+          const m2 = dLine.text.match(/(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})/);
+          if (m2) data.qDate = `${m2[3]}-${m2[2].padStart(2, '0')}-${m2[1].padStart(2, '0')}`;
+        }
+      }
 
-      // Bill To / Ship To block
-      const billShipIdx = lines.findIndex(l => /Bill\s*To/i.test(l.text) && /Ship\s*To/i.test(l.text));
-      let itemHeaderIdx = lines.findIndex((l, i) => i > billShipIdx && /Cat/i.test(l.text) && /Description/i.test(l.text));
-      if (itemHeaderIdx === -1) itemHeaderIdx = lines.findIndex((l, i) => i > billShipIdx && /Description/i.test(l.text));
+      // Bill To / Ship To block — anchor on whichever header OCR managed to read
+      let headerIdx = lines.findIndex(l => /Bill\s*To/i.test(l.text));
+      if (headerIdx === -1) headerIdx = lines.findIndex(l => /Ship\s*To/i.test(l.text));
 
-      if (billShipIdx !== -1 && itemHeaderIdx !== -1) {
-        const cw = lines[billShipIdx].cw;
-        const contentLeft = cw * 40 / 794, contentRight = cw * 754 / 794;
-        const midX = (contentLeft + contentRight) / 2;
+      let itemHeaderIdx = lines.findIndex((l, i) => (headerIdx === -1 || i > headerIdx) && /Description/i.test(l.text));
+      if (itemHeaderIdx === -1) {
+        itemHeaderIdx = lines.findIndex((l, i) => (headerIdx === -1 || i > headerIdx) && /Sr\.?\s*No/i.test(l.text) && /Cat/i.test(l.text));
+      }
+      const addrEnd = itemHeaderIdx === -1 ? lines.length : itemHeaderIdx;
+
+      if (headerIdx !== -1) {
+        const cw = lines[headerIdx].cw;
+        const midX = cw / 2;
         const billLines = [], shipLines = [];
-        for (let i = billShipIdx + 1; i < itemHeaderIdx; i++) {
+        for (let i = headerIdx + 1; i < addrEnd; i++) {
           const l = lines[i];
+          if (/^(Bill|Ship)\s*To$/i.test(l.text.trim())) continue;
           const leftWords = l.words.filter(w => w.x0 < midX);
           const rightWords = l.words.filter(w => w.x0 >= midX);
           if (leftWords.length) billLines.push(leftWords.map(w => w.text).join(' '));
@@ -1970,39 +1983,34 @@
     }
 
     // ── Split an address-table column's lines into labeled fields ──
-    function parseAddressBlock(lines, data, prefix) {
-      const titleLines = [];
-      let current = null;
-      lines.forEach(text => {
-        const t = text.trim();
-        if (!t) return;
-        let m;
-        if (m = t.match(/^Add?ress\s*[:.]?\s*(.*)/i)) {
-          data[prefix + 'Addr'] = m[1].trim();
-          current = 'addr';
-        } else if (m = t.match(/^GSTIN\s*[:.]?\s*(.*)/i)) {
-          data.bGST = m[1].trim();
-          current = null;
-        } else if (m = t.match(/^Attention\s*[:.]?\s*(.*)/i)) {
-          data[prefix + 'Attn'] = m[1].trim();
-          current = null;
-        } else if (m = t.match(/^Phone\s*(?:Number)?\s*[:.]?\s*(.*)/i)) {
-          data[prefix + 'Phone'] = (m[1] || '').trim();
-          current = null;
-        } else if (m = t.match(/^Email\s*[:.]?\s*(.*)/i)) {
-          data[prefix + 'Email'] = m[1].trim();
-          current = null;
-        } else if (current === 'addr') {
-          data[prefix + 'Addr'] = (data[prefix + 'Addr'] + ' ' + t).trim();
-        } else {
-          titleLines.push(t);
-        }
+    // Labels can appear anywhere within a line (not just at the start), since
+    // OCR sometimes merges adjacent fields onto one line.
+    function parseAddressBlock(linesArr, data, prefix) {
+      const cleaned = linesArr.map(t => t.trim()).filter(Boolean);
+      if (!cleaned.length) return;
+      const text = cleaned.join('\n');
+      const labelRe = /(Add?ress|GST\s*I?N|Attention|Phone\s*(?:Number)?|E[- ]?mail)\s*[:.]?\s*/gi;
+      const matches = [...text.matchAll(labelRe)];
+      const nameText = matches.length ? text.slice(0, matches[0].index) : text;
+      const nameLines = nameText.split('\n').map(s => s.trim()).filter(Boolean);
+
+      matches.forEach((m, idx) => {
+        const label = m[1].toLowerCase().replace(/\s+/g, '');
+        const start = m.index + m[0].length;
+        const end = idx + 1 < matches.length ? matches[idx + 1].index : text.length;
+        const val = text.slice(start, end).replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+        if (label.startsWith('add')) data[prefix + 'Addr'] = ((data[prefix + 'Addr'] || '') + ' ' + val).trim();
+        else if (label.startsWith('gst')) data.bGST = val;
+        else if (label.startsWith('att')) data[prefix + 'Attn'] = val;
+        else if (label.startsWith('phone')) data[prefix + 'Phone'] = val;
+        else if (label.startsWith('email')) data[prefix + 'Email'] = val;
       });
+
       if (prefix === 'b') {
-        data.bName = titleLines[0] || '';
+        data.bName = nameLines[0] || '';
       } else {
-        data.sName = titleLines[0] || '';
-        data.sInst = titleLines.slice(1).join(' ') || '';
+        data.sName = nameLines[0] || '';
+        data.sInst = nameLines.slice(1).join(' ') || '';
       }
     }
 
