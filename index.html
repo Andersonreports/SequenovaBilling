@@ -1902,11 +1902,19 @@
         const cw = lines[headerIdx].cw;
         const midX = cw / 2;
         const billLines = [], shipLines = [];
-        for (let i = headerIdx + 1; i < addrEnd; i++) {
+        for (let i = headerIdx; i < addrEnd; i++) {
           const l = lines[i];
-          if (/^(Bill|Ship)\s*To$/i.test(l.text.trim())) continue;
-          const leftWords = l.words.filter(w => w.x0 < midX);
-          const rightWords = l.words.filter(w => w.x0 >= midX);
+          let words = l.words;
+          if (i === headerIdx) {
+            // Strip "Bill To"/"Ship To" header tokens, which OCR sometimes
+            // merges into the same line as the first row of address content.
+            words = words.filter(w => !/^(Bill|Ship|To)$/i.test(w.text));
+          } else if (/^(Bill|Ship)\s*To$/i.test(l.text.trim())) {
+            continue;
+          }
+          if (!words.length) continue;
+          const leftWords = words.filter(w => w.x0 < midX);
+          const rightWords = words.filter(w => w.x0 >= midX);
           if (leftWords.length) billLines.push(leftWords.map(w => w.text).join(' '));
           if (rightWords.length) shipLines.push(rightWords.map(w => w.text).join(' '));
         }
@@ -1921,7 +1929,7 @@
         const pageNum = lines[itemHeaderIdx].page;
         const header2Idx = lines.findIndex((l, idx) => idx > itemHeaderIdx && l.page === pageNum && /SGST/i.test(l.text) && /CGST/i.test(l.text));
         const yTop = header2Idx !== -1 ? lines[header2Idx].y1 : lines[itemHeaderIdx].y1;
-        const subtotalIdx = lines.findIndex((l, idx) => idx > itemHeaderIdx && l.page === pageNum && /Subtotal/i.test(l.text));
+        const subtotalIdx = lines.findIndex((l, idx) => idx > itemHeaderIdx && l.page === pageNum && /Sub\s*-?\s*total/i.test(l.text));
         const yBottom = subtotalIdx !== -1 ? lines[subtotalIdx].y0 : Infinity;
 
         const cw = lines[itemHeaderIdx].cw;
@@ -1943,12 +1951,28 @@
           .filter(w => w.x0 < srColEnd + 10 && /^[0-9lI|]{1,3}$/.test(w.text))
           .sort((a, b) => a.y0 - b.y0);
 
+        // Drop spurious markers far below the real table (e.g. a digit-like
+        // token picked up from the "Amount in Words"/footer text), based on
+        // an abnormally large gap compared to the row spacing seen so far.
+        if (markers.length > 2) {
+          const ycOf = m => (m.y0 + m.y1) / 2;
+          const gaps = [];
+          for (let k = 1; k < markers.length; k++) gaps.push(ycOf(markers[k]) - ycOf(markers[k - 1]));
+          for (let k = 1; k < gaps.length; k++) {
+            const avgPrev = gaps.slice(0, k).reduce((a, b) => a + b, 0) / k;
+            if (gaps[k] > avgPrev * 1.8 + 20) {
+              markers.length = k + 1;
+              break;
+            }
+          }
+        }
+
         const rowsWords = markers.map((m, idx) => {
           const yc = (m.y0 + m.y1) / 2;
           const prevYc = idx > 0 ? (markers[idx - 1].y0 + markers[idx - 1].y1) / 2 : -Infinity;
           const nextYc = idx < markers.length - 1 ? (markers[idx + 1].y0 + markers[idx + 1].y1) / 2 : Infinity;
           const rowTop = idx === 0 ? -Infinity : (prevYc + yc) / 2;
-          const rowBottom = idx === markers.length - 1 ? Infinity : (yc + nextYc) / 2;
+          const rowBottom = idx === markers.length - 1 ? yBottom : (yc + nextYc) / 2;
           return tableWords.filter(w => { const wyc = (w.y0 + w.y1) / 2; return wyc >= rowTop && wyc < rowBottom; });
         });
 
@@ -1956,12 +1980,29 @@
         // strip these punctuation-only artifacts from cell text.
         const isBorderNoise = t => /^[|¦❘!:.]{1,3}$/.test(t);
 
+        // Group a cell's words into visual lines (by y-proximity) before
+        // ordering left-to-right, so multi-line cells read in the correct
+        // word order even when raw OCR y0 values jitter slightly.
+        const groupIntoLines = words => {
+          const sorted = [...words].sort((a, b) => a.y0 - b.y0);
+          const wlines = [];
+          sorted.forEach(w => {
+            const h = w.y1 - w.y0;
+            let wl = wlines.find(l => Math.abs(l.y - w.y0) < h * 0.6);
+            if (!wl) { wl = { y: w.y0, words: [] }; wlines.push(wl); }
+            wl.words.push(w);
+          });
+          wlines.sort((a, b) => a.y - b.y);
+          return wlines.map(wl => wl.words.sort((x, y) => x.x0 - y.x0));
+        };
+
         rowsWords.forEach(allWords => {
           const colText = name => {
             const [a, b] = colX(name);
-            return allWords.filter(w => w.x0 >= a - 5 && w.x0 < b + 5 && !isBorderNoise(w.text))
-              .sort((x, y) => x.y0 - y.y0 || x.x0 - y.x0)
-              .map(w => w.text).join(' ').trim();
+            const cellWords = allWords.filter(w => w.x0 >= a - 5 && w.x0 < b + 5 && !isBorderNoise(w.text));
+            return groupIntoLines(cellWords)
+              .map(wl => wl.map(w => w.text).join(' '))
+              .join(' ').trim();
           };
           const desc = colText('desc'), cat = colText('cat'), hsn = colText('hsn');
           const pack = colText('pack') || '1 Unit';
@@ -2027,11 +2068,18 @@
       const nameText = matches.length ? text.slice(0, matches[0].index) : text;
       const nameLines = nameText.split('\n').map(s => s.trim()).filter(Boolean);
 
+      // The last field's value can run on into the items table header if OCR
+      // merged that header into the same line — cut it off at the first
+      // table-header keyword.
+      const HEADER_STOP = /\b(Sr\.?\s*No\.?|Cat\.?\s*#|Description|HSN|Pack\s*size|Unit\s*price|QTY\.?|Total\s*Cost|SGST|CGST|IGST)\b/i;
+
       matches.forEach((m, idx) => {
         const label = m[1].toLowerCase().replace(/\s+/g, '');
         const start = m.index + m[0].length;
         const end = idx + 1 < matches.length ? matches[idx + 1].index : text.length;
-        const val = text.slice(start, end).replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+        let val = text.slice(start, end).replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+        const stopAt = val.search(HEADER_STOP);
+        if (stopAt > 0) val = val.slice(0, stopAt).trim();
         if (label.startsWith('add')) data[prefix + 'Addr'] = ((data[prefix + 'Addr'] || '') + ' ' + val).trim();
         else if (label.startsWith('gst')) data.bGST = val;
         else if (label.startsWith('att')) data[prefix + 'Attn'] = val;
