@@ -1865,20 +1865,14 @@
       };
       const num = s => { const m = String(s || '').replace(/,/g, '').match(/-?\d+(\.\d+)?/); return m ? m[0] : ''; };
 
-      // Quote No / Date — "Quote No: <val>" and "Date: <val>" sit on the same
-      // visual row but can be split into separate OCR "line" objects, so pull
-      // in any other lines on that row before matching.
-      const qLineIdx = lines.findIndex(l => /Quote\s*No/i.test(l.text));
-      if (qLineIdx !== -1) {
-        const qLine = lines[qLineIdx];
-        const h = qLine.y1 - qLine.y0;
-        const rowText = lines
-          .filter(l => l.page === qLine.page && Math.abs(l.y0 - qLine.y0) < h * 0.6)
-          .sort((a, b) => a.x0 - b.x0)
-          .map(l => l.text).join(' ');
-        const m1 = rowText.match(/Quote\s*No\s*[:.]?\s*(\S+)/i);
+      // Quote No / Date — "QUOTATION Quote", "No: <val>" and "Date: <val>" can
+      // each land on their own separate OCR "line" objects, so join all the
+      // lines near the top of page 1 before matching.
+      {
+        const topText = lines.filter(l => l.page === 0 && l.y0 < 400).map(l => l.text).join(' ');
+        const m1 = topText.match(/Quote\s*No\s*[:.]?\s*(\S+)/i);
         if (m1 && !/^[-—_.]+$/.test(m1[1]) && !/^Date/i.test(m1[1])) data.qNo = m1[1].replace(/[^A-Za-z0-9-]/g, '');
-        const m2 = rowText.match(/(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})/);
+        const m2 = topText.match(/(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})/);
         if (m2) data.qDate = `${m2[3]}-${m2[2].padStart(2, '0')}-${m2[1].padStart(2, '0')}`;
       }
       if (!data.qDate) {
@@ -1935,7 +1929,9 @@
       // Sr.No column instead of treating each OCR line as a row).
       if (itemHeaderIdx !== -1) {
         const pageNum = lines[itemHeaderIdx].page;
-        const header2Idx = lines.findIndex((l, idx) => idx > itemHeaderIdx && l.page === pageNum && /SGST/i.test(l.text) && /CGST/i.test(l.text));
+        // OCR frequently misreads "SGST" (e.g. "scst"), but "CGST"/"IGST" tend
+        // to survive — anchor on those instead.
+        const header2Idx = lines.findIndex((l, idx) => idx > itemHeaderIdx && l.page === pageNum && /CGST/i.test(l.text) && /IGST/i.test(l.text));
         const yTop = header2Idx !== -1 ? lines[header2Idx].y1 : lines[itemHeaderIdx].y1;
         const subtotalIdx = lines.findIndex((l, idx) => idx > itemHeaderIdx && l.page === pageNum && /Sub\s*-?\s*total/i.test(l.text));
         const yBottom = subtotalIdx !== -1 ? lines[subtotalIdx].y0 : Infinity;
@@ -1956,7 +1952,7 @@
 
         const [, srColEnd] = colX('sr');
         const markers = tableWords
-          .filter(w => w.x0 < srColEnd + 10 && /^[0-9lI|]{1,3}$/.test(w.text))
+          .filter(w => w.x0 < srColEnd + 10 && /^[0-9lI]{1,3}$/.test(w.text))
           .sort((a, b) => a.y0 - b.y0);
 
         // Drop spurious markers far below the real table (e.g. a digit-like
@@ -2001,14 +1997,13 @@
           return groupIntoLines(cellWords).map(wl => wl.map(w => w.text).join(' ')).join(' ').trim();
         };
 
-        // GST % cells normally read like "5%", but OCR sometimes drops the
-        // "%" symbol — fall back to a bare number (capped to a plausible
-        // GST rate) in that case.
+        // GST % cells read like "5%". When the rate is 0% the template only
+        // shows the rupee amount (e.g. "₹0", which OCR often garbles into a
+        // bare number) with no "%" sign at all — treat that as 0 rather than
+        // misreading the garbled amount as a percentage.
         const pctOf = txt => {
           const m = txt.match(/(\d+(?:\.\d+)?)\s*%/);
-          if (m) return parseFloat(m[1]);
-          const m2 = txt.match(/^(\d+(?:\.\d+)?)$/);
-          return m2 && parseFloat(m2[1]) <= 28 ? parseFloat(m2[1]) : 0;
+          return m ? parseFloat(m[1]) : 0;
         };
 
         const rows = [];
@@ -2029,7 +2024,9 @@
           const topWords = rowWords.filter(w => Math.abs(((w.y0 + w.y1) / 2) - yc) < markerH * 0.7);
 
           const desc = cellText(rowWords, 'desc');
-          const cat = cellText(topWords, 'cat') || cellText(rowWords, 'cat');
+          // Cat# codes are "S" + 6 digits; OCR commonly misreads the leading
+          // "S" as "$".
+          const cat = (cellText(topWords, 'cat') || cellText(rowWords, 'cat')).replace(/^\$(\d{6})$/, 'S$1');
           const hsn = cellText(topWords, 'hsn') || cellText(rowWords, 'hsn');
           const pack = cellText(topWords, 'pack') || cellText(rowWords, 'pack') || '1 Unit';
           const price = num(cellText(topWords, 'price') || cellText(rowWords, 'price'));
@@ -2071,16 +2068,23 @@
 
       // Transportation cost / GST — the label sits in the left cell of the
       // row and the amount in the right cell, which OCR usually reads as a
-      // separate "line" on the same row.
+      // separate "line" on the same row. The "₹" currency symbol is often
+      // misread as a stray leading digit (e.g. "Transportation Cost 2
+      // 14,999"), so take the last (largest) number found rather than the
+      // first.
+      const lastNum = s => {
+        const matches = String(s || '').replace(/,/g, '').match(/-?\d+(\.\d+)?/g);
+        return matches ? matches[matches.length - 1] : '';
+      };
       const rowValue = line => {
-        const v = num(line.text);
+        const v = lastNum(line.text);
         if (v) return v;
         const h = line.y1 - line.y0;
         const sameRow = lines
           .filter(l => l !== line && l.page === line.page && Math.abs(l.y0 - line.y0) < h * 0.6 && l.x0 > line.x0)
           .sort((a, b) => a.x0 - b.x0);
         for (const l of sameRow) {
-          const m = num(l.text);
+          const m = lastNum(l.text);
           if (m) return m;
         }
         return '';
@@ -2140,6 +2144,24 @@
       return data;
     }
 
+    // ── Clean up an OCR-read GSTIN against its known 15-character format ──
+    // Format: 2 digits (state code) + 5 letters + 4 digits + 1 letter +
+    // 1 alphanumeric + "Z" (fixed) + 1 alphanumeric (checksum). OCR commonly
+    // confuses O/0, I/L/1, S/5, B/8 and Z/2 — fix those up per-position.
+    function normalizeGSTIN(val) {
+      let s = val.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      if (s.length !== 15) return val.trim();
+      const toDigit = c => ({ O: '0', D: '0', Q: '0', I: '1', L: '1', Z: '2', S: '5', B: '8' }[c] || c);
+      const toLetter = c => ({ '0': 'O', '1': 'I', '2': 'Z', '5': 'S', '8': 'B' }[c] || c);
+      const chars = s.split('');
+      for (let i = 0; i <= 1; i++) chars[i] = /[0-9]/.test(chars[i]) ? chars[i] : toDigit(chars[i]);
+      for (let i = 2; i <= 6; i++) chars[i] = /[A-Z]/.test(chars[i]) ? chars[i] : toLetter(chars[i]);
+      for (let i = 7; i <= 10; i++) chars[i] = /[0-9]/.test(chars[i]) ? chars[i] : toDigit(chars[i]);
+      chars[11] = /[A-Z]/.test(chars[11]) ? chars[11] : toLetter(chars[11]);
+      chars[13] = 'Z';
+      return chars.join('');
+    }
+
     // ── Split an address-table column's lines into labeled fields ──
     // Labels can appear anywhere within a line (not just at the start), since
     // OCR sometimes merges adjacent fields onto one line.
@@ -2165,7 +2187,7 @@
         const stopAt = val.search(HEADER_STOP);
         if (stopAt > 0) val = val.slice(0, stopAt).trim();
         if (label.startsWith('add')) data[prefix + 'Addr'] = ((data[prefix + 'Addr'] || '') + ' ' + val).trim();
-        else if (label.startsWith('gst')) data.bGST = val;
+        else if (label.startsWith('gst')) data.bGST = normalizeGSTIN(val);
         else if (label.startsWith('att')) data[prefix + 'Attn'] = val;
         else if (label.startsWith('phone')) data[prefix + 'Phone'] = val;
         else if (label.startsWith('email')) data[prefix + 'Email'] = val;
