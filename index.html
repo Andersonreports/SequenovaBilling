@@ -704,6 +704,10 @@
       padding-bottom: var(--row-pad, 8px);
     }
 
+    .doc-invoice .it .item-row td {
+      background: #d9ead3;
+    }
+
     .it .sub-row td {
       background: #dce8f8;
       font-weight: bold;
@@ -1347,9 +1351,9 @@
           <td>${inr(it.price)}</td>
           <td>${it.qty}</td>
           <td>${inr(total)}</td>
-          <td>${it.sgst ? it.sgst + '%<br>' : ''}${inr(total * it.sgst / 100)}</td>
-          <td>${it.cgst ? it.cgst + '%<br>' : ''}${inr(total * it.cgst / 100)}</td>
-          <td>${it.igst ? it.igst + '%<br>' : ''}${inr(total * it.igst / 100)}</td>
+          <td>${it.sgst}%</td>
+          <td>${it.cgst}%</td>
+          <td>${it.igst}%</td>
         </tr>`;
       });
 
@@ -1494,8 +1498,9 @@
         }
       }
 
+      const docTypeClass = isInvoice ? ' doc-invoice' : '';
       const termsPage = `
-    <div class="quote-page${termsPageClass}">
+    <div class="quote-page${termsPageClass}${docTypeClass}">
       <div class="page-hdr"></div>
       <span class="page-label">PAGE ${buckets.length + 1}</span>
       <div class="p2-hdr">
@@ -1537,7 +1542,7 @@
         if (idx === 0) {
           html += `
     <!-- ══ PAGE ${pageNum} ══ -->
-    <div class="quote-page">
+    <div class="quote-page${docTypeClass}">
       <div class="page-hdr"></div>
       <span class="page-label">PAGE ${pageNum}</span>
       <div class="dh">
@@ -1567,7 +1572,7 @@
         } else {
           html += `
     <!-- ══ PAGE ${pageNum} ══ -->
-    <div class="quote-page">
+    <div class="quote-page${docTypeClass}">
       <div class="page-hdr"></div>
       <span class="page-label">PAGE ${pageNum}</span>
       <div class="p2-hdr">
