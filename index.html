@@ -989,14 +989,14 @@
     <!-- ══════════ LEFT PANEL ══════════ -->
     <div class="form-panel">
 
-      <div class="sec-title">Quote Information</div>
+      <div class="sec-title" id="qInfoTitle">Quote Information</div>
       <div class="frow">
         <div class="fg">
           <label>Date</label>
           <input type="date" id="qDate" oninput="renderPreview()">
         </div>
         <div class="fg">
-          <label>Quote No.</label>
+          <label id="qNoLabel">Quote No.</label>
           <input type="text" id="qNo" placeholder="SN20260428037" oninput="renderPreview()">
         </div>
       </div>
@@ -1279,7 +1279,11 @@
     // ── Render quotation preview ──
     function renderPreview() {
       syncShipToBillTo();
-      const docTitle = $v('docType') === 'invoice' ? 'INVOICE' : 'QUOTATION';
+      const isInvoice = $v('docType') === 'invoice';
+      const docTitle = isInvoice ? 'INVOICE' : 'QUOTATION';
+      const qnoLabel = isInvoice ? 'Invoice No:' : 'Quote No:';
+      document.getElementById('qInfoTitle').textContent = isInvoice ? 'Invoice Information' : 'Quote Information';
+      document.getElementById('qNoLabel').textContent = isInvoice ? 'Invoice No.' : 'Quote No.';
       const qdate = $v('qDate'), qno = $v('qNo').trim() || '—';
       const tc = $n('tCost'), tgr = $n('tGST');
       const bankRows = [
@@ -1398,7 +1402,7 @@
       const mWrap = document.createElement('div');
       mWrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:714px;visibility:hidden;pointer-events:none;font-family:"Times New Roman",Times,serif;font-size:15px;line-height:1.45;color:#111;';
       mWrap.innerHTML = `
-        <div class="dh"><div class="dh-row1"><div></div><div class="dh-title">${docTitle}</div><div class="dh-qno"><span class="lbl">Quote No:</span><span class="val">${h(qno)}</span><span class="lbl">Date:</span><span class="val">${fmtD(qdate)}</span></div></div></div>
+        <div class="dh"><div class="dh-row1"><div></div><div class="dh-title">${docTitle}</div><div class="dh-qno"><span class="lbl">${qnoLabel}</span><span class="val">${h(qno)}</span><span class="lbl">Date:</span><span class="val">${fmtD(qdate)}</span></div></div></div>
         <table class="addr-tbl">
           <thead><tr>
             <th style="width:50%">Bill To</th><th style="width:50%">Ship To</th>
@@ -1540,7 +1544,7 @@
         <div class="dh-row1">
           <div></div>
           <div class="dh-title">${docTitle}</div>
-          <div class="dh-qno"><span class="lbl">Quote No:</span><span class="val">${h(qno)}</span><span class="lbl">Date:</span><span class="val">${fmtD(qdate)}</span></div>
+          <div class="dh-qno"><span class="lbl">${qnoLabel}</span><span class="val">${h(qno)}</span><span class="lbl">Date:</span><span class="val">${fmtD(qdate)}</span></div>
         </div>
       </div>
       <table class="addr-tbl">
