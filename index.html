@@ -1105,11 +1105,11 @@
       <div class="frow">
         <div class="fg">
           <label>Transport Cost (₹)</label>
-          <input type="number" id="tCost" value="0" min="0" oninput="renderPreview()">
+          <input type="number" id="tCost" min="0" oninput="renderPreview()">
         </div>
         <div class="fg">
           <label>Transport GST %</label>
-          <input type="number" id="tGST" value="18" min="0" max="100" oninput="renderPreview()">
+          <input type="number" id="tGST" min="0" max="100" oninput="renderPreview()">
         </div>
       </div>
 
@@ -1125,10 +1125,7 @@
       </div>
       <div class="fg">
         <label>Terms Text</label>
-        <textarea id="termsText" oninput="renderPreview()">1. Price: All prices mentioned above are in INR
-2. Payment: 100% Advanced.
-3. Delivery: 15 working days from the date of PO received along with advanced payment. (As per Stock Availability)
-4. Expiry: One year against manufacturing</textarea>
+        <textarea id="termsText" oninput="renderPreview()"></textarea>
       </div>
 
       <!-- Bank details are fixed and not editable from the sidebar, but still appear on the bill -->
@@ -1261,7 +1258,7 @@
 
     // ── Item management ──
     function addItem() {
-      items.push({ id: nid++, cat: '', desc: '', hsn: '', pack: '1 Unit', price: 0, qty: 1, sgst: 0, cgst: 0, igst: 5 });
+      items.push({ id: nid++, cat: '', desc: '', hsn: '', pack: '1 Unit', price: 0, qty: 1, sgst: 0, cgst: 0, igst: 0 });
       renderItemCards();
       renderPreview();
     }
