@@ -51,6 +51,7 @@
     .hdr-right {
       display: flex;
       align-items: center;
+      gap: 10px;
     }
 
     .doctype-select {
@@ -990,6 +991,10 @@
         <option value="invoice">Invoice</option>
         <option value="purchase">Purchase Order</option>
       </select>
+      <select class="doctype-select" id="currency" onchange="renderPreview()">
+        <option value="INR">₹ Rupees</option>
+        <option value="USD">$ Dollars</option>
+      </select>
     </div>
   </div>
 
@@ -1173,7 +1178,12 @@
     function $n(id) { return parseFloat(document.getElementById(id)?.value) || 0; }
     function h(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\n/g, '<br>'); }
     function ev(s) { return String(s || '').replace(/"/g, '&quot;').replace(/&/g, '&amp;'); }
-    function inr(n) { return '₹ ' + Number(n).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); }
+    function inr(n) {
+      const isUSD = $v('currency') === 'USD';
+      const sym = isUSD ? '$' : '₹';
+      const locale = isUSD ? 'en-US' : 'en-IN';
+      return sym + ' ' + Number(n).toLocaleString(locale, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
     function fmtD(s) { if (!s) return '—'; const [y, m, d] = s.split('-'); return `${d}.${m}.${y}`; }
 
     // ── Number → Indian words ──
@@ -1188,14 +1198,21 @@
     const _t = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
     function two(n) { return n < 20 ? _o[n] : _t[Math.floor(n / 10)] + (n % 10 ? ' ' + _o[n % 10] : ''); }
     function n2w(x) {
+      const isUSD = $v('currency') === 'USD';
       const n = Math.round(x); if (!n) return 'Zero Only';
       const p = []; let r = n;
-      if (r >= 10000000) { p.push(two(Math.floor(r / 10000000)) + ' Crore'); r %= 10000000; }
-      if (r >= 100000) { p.push(two(Math.floor(r / 100000)) + ' Lakh'); r %= 100000; }
-      if (r >= 1000) { p.push(two(Math.floor(r / 1000)) + ' Thousand'); r %= 1000; }
+      if (isUSD) {
+        if (r >= 1000000000) { p.push(two(Math.floor(r / 1000000000)) + ' Billion'); r %= 1000000000; }
+        if (r >= 1000000) { p.push(two(Math.floor(r / 1000000)) + ' Million'); r %= 1000000; }
+        if (r >= 1000) { p.push(two(Math.floor(r / 1000)) + ' Thousand'); r %= 1000; }
+      } else {
+        if (r >= 10000000) { p.push(two(Math.floor(r / 10000000)) + ' Crore'); r %= 10000000; }
+        if (r >= 100000) { p.push(two(Math.floor(r / 100000)) + ' Lakh'); r %= 100000; }
+        if (r >= 1000) { p.push(two(Math.floor(r / 1000)) + ' Thousand'); r %= 1000; }
+      }
       if (r >= 100) { p.push(_o[Math.floor(r / 100)] + ' Hundred'); r %= 100; }
       if (r > 0) { p.push(two(r)); }
-      return 'Rupees ' + p.join(' ') + ' Only';
+      return (isUSD ? 'US Dollars ' : 'Rupees ') + p.join(' ') + ' Only';
     }
 
     // ── Item management ──
@@ -1290,6 +1307,7 @@
       syncShipToBillTo();
       const isInvoice = $v('docType') === 'invoice';
       const isPurchase = $v('docType') === 'purchase';
+      const curCode = $v('currency') === 'USD' ? 'USD' : 'INR';
       const docTitle = isPurchase ? 'PURCHASE ORDER' : (isInvoice ? 'INVOICE' : 'QUOTATION');
       const qnoLabel = isPurchase ? 'Purchase No:' : (isInvoice ? 'Invoice No:' : 'Quote No:');
       document.getElementById('qInfoTitle').textContent = isPurchase ? 'Purchase Order Information' : (isInvoice ? 'Invoice Information' : 'Quote Information');
@@ -1372,7 +1390,7 @@
             <th rowspan="2" style="width:7%">Pack size</th>
             <th rowspan="2" style="width:9%">Unit price</th>
             <th rowspan="2" style="width:5%">QTY.</th>
-            <th rowspan="2" style="width:10%">Total Cost<br>(INR)</th>
+            <th rowspan="2" style="width:10%">Total Cost<br>(${curCode})</th>
             <th colspan="3">GST</th>
           </tr>
           <tr>
@@ -1771,7 +1789,7 @@
     // ── Capture all form data as a plain object ──
     function captureFormData() {
       return {
-        docType: $v('docType'),
+        docType: $v('docType'), currency: $v('currency'),
         qDate: $v('qDate'), qNo: $v('qNo'),
         bName: $v('bName'), bAddr: $v('bAddr'), bGST: $v('bGST'),
         bAttn: $v('bAttn'), bPhone: $v('bPhone'), bEmail: $v('bEmail'),
@@ -1788,6 +1806,7 @@
     function populateFormFromData(d, msg) {
       const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
       set('docType', d.docType || 'quotation');
+      set('currency', d.currency || 'INR');
       set('qDate', d.qDate); set('qNo', d.qNo);
       set('bName', d.bName); set('bAddr', d.bAddr); set('bGST', d.bGST);
       set('bAttn', d.bAttn); set('bPhone', d.bPhone); set('bEmail', d.bEmail);
