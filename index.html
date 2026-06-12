@@ -1111,6 +1111,10 @@
           <label>Transport GST %</label>
           <input type="number" id="tGST" min="0" max="100" oninput="renderPreview()">
         </div>
+        <div class="fg">
+          <label>Freight (₹)</label>
+          <input type="number" id="freight" min="0" oninput="renderPreview()">
+        </div>
       </div>
 
       <div class="sec-title">Terms &amp; Conditions</div>
@@ -1225,6 +1229,8 @@
         items.forEach(it => { it.price = round2(it.price * factor); });
         const tcEl = document.getElementById('tCost');
         if (tcEl) tcEl.value = round2($n('tCost') * factor);
+        const frEl = document.getElementById('freight');
+        if (frEl) frEl.value = round2($n('freight') * factor);
         prevCurrency = newCur;
         renderItemCards();
       }
@@ -1360,24 +1366,15 @@
       document.getElementById('qInfoTitle').textContent = isPurchase ? 'Purchase Order Information' : (isInvoice ? 'Invoice Information' : 'Quote Information');
       document.getElementById('qNoLabel').textContent = isPurchase ? 'Purchase No.' : (isInvoice ? 'Invoice No.' : 'Quote No.');
       const qdate = $v('qDate'), qno = $v('qNo').trim() || '—';
-      const tc = $n('tCost'), tgr = $n('tGST');
-      const bankRows = (isPurchase ? [
-        ['Beneficiary', 'GeneMind Biosciences Company Limited'],
-        ['Tax Number', '914403005990671000'],
-        ['Bank Name', 'QILU BANK CO., LTD.'],
-        ['Branch', 'No.10817, Jingshi Road, Lixia Distict, Jinan City, Shandong Province, China'],
-        ['Account No.', '8661 1731 1996 2880 0284'],
-        ['Swift code', 'JNSHCNBN'],
-        ["Intermediary Bank's Name", 'BANK OF COMMUNICATIONS,(SHANDONG PROVINCIAL BRANCH)'],
-        ['IB Swift Code', 'COMMCNSHJNN']
-      ] : [
+      const tc = $n('tCost'), tgr = $n('tGST'), freight = $n('freight');
+      const bankRows = [
         ['Beneficiary', $v('bankBeneficiary')],
         ['Bank Name', $v('bankName')],
         ['Branch Name', $v('bankBranch')],
         ['Account No.', $v('bankAccountNo')],
         ['IFSC Code', $v('bankIfsc')],
         ['Bank Address', $v('bankAddress')]
-      ]).map(([label, value]) => `<tr><td class="bl">${label}</td><td class="bc">:</td><td>${h(value) || '&nbsp;'}</td></tr>`).join('');
+      ].map(([label, value]) => `<tr><td class="bl">${label}</td><td class="bc">:</td><td>${h(value) || '&nbsp;'}</td></tr>`).join('');
       const signatoryName = $v('signatoryName').trim();
       const signatoryMobile = $v('signatoryMobile').trim();
       document.getElementById('mobileFieldWrap').style.display = isPurchase ? '' : 'none';
@@ -1419,12 +1416,13 @@
         sub += t; tSG += t * it.sgst / 100; tCG += t * it.cgst / 100; tIG += t * it.igst / 100; totalQty += it.qty;
       });
       const tgAmt = tc * tgr / 100;
-      const grand = sub + tSG + tCG + tIG + tc + tgAmt;
+      const grand = sub + tSG + tCG + tIG + tc + tgAmt + freight;
 
       // For Purchase Orders, hide the GST columns/rows and the transportation
       // cost rows entirely when none of those values are actually set.
       const showGST = !isPurchase || items.some(it => Number(it.sgst) > 0 || Number(it.cgst) > 0 || Number(it.igst) > 0);
       const showTransport = !isPurchase || tc > 0 || tgAmt > 0;
+      const showFreight = !isPurchase || freight > 0;
       const totalCols = 8 + (showGST ? 3 : 0);
 
       // Build all item row HTML
@@ -1476,6 +1474,10 @@
           <tr>
             <td colspan="7" style="text-align:right">${tgr}% GST (Transport)</td>
             <td colspan="${showGST ? 4 : 1}">${inr(tgAmt)}</td>
+          </tr>` : ''}
+          ${showFreight ? `<tr>
+            <td colspan="7" style="text-align:right">Freight</td>
+            <td colspan="${showGST ? 4 : 1}">${inr(freight)}</td>
           </tr>` : ''}
           <tr class="tot-row">
             <td colspan="7" style="text-align:right"><strong>TOTAL PRICE</strong></td>
@@ -1856,7 +1858,7 @@
         bAttn: $v('bAttn'), bPhone: $v('bPhone'), bEmail: $v('bEmail'),
         sName: $v('sName'), sInst: $v('sInst'), sAddr: $v('sAddr'),
         sAttn: $v('sAttn'), sPhone: $v('sPhone'), sEmail: $v('sEmail'),
-        tCost: $v('tCost'), tGST: $v('tGST'),
+        tCost: $v('tCost'), tGST: $v('tGST'), freight: $v('freight'),
         termsType: $v('termsType'), termsText: $v('termsText'),
         signatoryName: $v('signatoryName'), signatoryMobile: $v('signatoryMobile'),
         items: items.map(it => Object.assign({}, it))
@@ -1875,7 +1877,7 @@
       set('bAttn', d.bAttn); set('bPhone', d.bPhone); set('bEmail', d.bEmail);
       set('sName', d.sName); set('sInst', d.sInst); set('sAddr', d.sAddr);
       set('sAttn', d.sAttn); set('sPhone', d.sPhone); set('sEmail', d.sEmail);
-      set('tCost', d.tCost); set('tGST', d.tGST);
+      set('tCost', d.tCost); set('tGST', d.tGST); set('freight', d.freight);
       set('termsType', d.termsType); set('termsText', d.termsText);
       set('signatoryName', d.signatoryName);
       set('signatoryMobile', d.signatoryMobile);
