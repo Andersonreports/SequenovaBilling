@@ -1352,6 +1352,8 @@
       const isPurchase = $v('docType') === 'purchase';
       const curCode = $v('currency') === 'USD' ? 'USD' : 'INR';
       const docTitle = isPurchase ? 'PURCHASE ORDER' : (isInvoice ? 'INVOICE' : 'QUOTATION');
+      const titleStyle = isPurchase ? 'font-size:18px;letter-spacing:2px;' : '';
+      const p2TitleStyle = isPurchase ? 'font-size:16px;letter-spacing:1.5px;' : 'font-size:20px;letter-spacing:3px;';
       const qnoLabel = isPurchase ? 'Purchase No:' : (isInvoice ? 'Invoice No:' : 'Quote No:');
       document.getElementById('qInfoTitle').textContent = isPurchase ? 'Purchase Order Information' : (isInvoice ? 'Invoice Information' : 'Quote Information');
       document.getElementById('qNoLabel').textContent = isPurchase ? 'Purchase No.' : (isInvoice ? 'Invoice No.' : 'Quote No.');
@@ -1473,7 +1475,7 @@
       const mWrap = document.createElement('div');
       mWrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:714px;visibility:hidden;pointer-events:none;font-family:"Times New Roman",Times,serif;font-size:15px;line-height:1.45;color:#111;';
       mWrap.innerHTML = `
-        <div class="dh"><div class="dh-row1"><div></div><div class="dh-title">${docTitle}</div><div class="dh-qno"><span class="lbl">${qnoLabel}</span><span class="val">${h(qno)}</span><span class="lbl">Date:</span><span class="val">${fmtD(qdate)}</span></div></div></div>
+        <div class="dh"><div class="dh-row1"><div></div><div class="dh-title" style="${titleStyle}">${docTitle}</div><div class="dh-qno"><span class="lbl">${qnoLabel}</span><span class="val">${h(qno)}</span><span class="lbl">Date:</span><span class="val">${fmtD(qdate)}</span></div></div></div>
         <table class="addr-tbl">
           <thead><tr>
             <th style="width:50%">Bill To</th><th style="width:50%">Ship To</th>
@@ -1484,7 +1486,7 @@
         </table>
         <table class="it">${tblHead}<tbody class="sqn-mr">${allRows.join('')}</tbody></table>
         <div class="amt-words"><strong>Amount in Word:</strong>&emsp;x</div>
-        <div class="p2-hdr"><div class="dh-row1"><div></div><div style="font-size:20px;font-weight:bold;letter-spacing:3px">${docTitle}</div><div></div></div></div>`;
+        <div class="p2-hdr"><div class="dh-row1"><div></div><div style="${p2TitleStyle}font-weight:bold">${docTitle}</div><div></div></div></div>`;
       const mTotTbl = document.createElement('table');
       mTotTbl.className = 'it';
       mTotTbl.innerHTML = `<tbody>${totalsRows}</tbody>`;
@@ -1573,7 +1575,7 @@
       <div class="p2-hdr">
         <div class="dh-row1">
           <div></div>
-          <div style="text-align:center;font-size:20px;font-weight:bold;letter-spacing:3px">${docTitle}</div>
+          <div style="text-align:center;font-weight:bold;${p2TitleStyle}">${docTitle}</div>
           <div style="font-size:15px;font-weight:bold;text-align:right;justify-self:end">${h(qno)}</div>
         </div>
       </div>
@@ -1615,7 +1617,7 @@
       <div class="dh">
         <div class="dh-row1">
           <div></div>
-          <div class="dh-title">${docTitle}</div>
+          <div class="dh-title" style="${titleStyle}">${docTitle}</div>
           <div class="dh-qno"><span class="lbl">${qnoLabel}</span><span class="val">${h(qno)}</span><span class="lbl">Date:</span><span class="val">${fmtD(qdate)}</span></div>
         </div>
       </div>
@@ -1645,7 +1647,7 @@
       <div class="p2-hdr">
         <div class="dh-row1">
           <div></div>
-          <div style="text-align:center;font-size:20px;font-weight:bold;letter-spacing:3px">${docTitle}</div>
+          <div style="text-align:center;font-weight:bold;${p2TitleStyle}">${docTitle}</div>
           <div style="font-size:15px;font-weight:bold;text-align:right;justify-self:end">${h(qno)}</div>
         </div>
       </div>
