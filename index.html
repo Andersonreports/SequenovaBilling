@@ -1117,7 +1117,8 @@
       <div class="fg">
         <label>Product Type</label>
         <select id="termsType" onchange="applyTermsTemplate(this.value)">
-          <option value="reagents" selected>Reagents</option>
+          <option value="" selected disabled hidden>Select…</option>
+          <option value="reagents">Reagents</option>
           <option value="instrument">Instrument</option>
           <option value="other">Other</option>
         </select>
@@ -1408,6 +1409,12 @@
       const tgAmt = tc * tgr / 100;
       const grand = sub + tSG + tCG + tIG + tc + tgAmt;
 
+      // For Purchase Orders, hide the GST columns/rows and the transportation
+      // cost rows entirely when none of those values are actually set.
+      const showGST = !isPurchase || items.some(it => Number(it.sgst) > 0 || Number(it.cgst) > 0 || Number(it.igst) > 0);
+      const showTransport = !isPurchase || tc > 0 || tgAmt > 0;
+      const totalCols = 8 + (showGST ? 3 : 0);
+
       // Build all item row HTML
       const allRows = items.map((it, i) => {
         const total = it.price * it.qty;
@@ -1420,29 +1427,27 @@
           <td>${inr(it.price)}</td>
           <td>${it.qty}</td>
           <td>${inr(total)}</td>
-          <td>${it.sgst}%</td>
-          <td>${it.cgst}%</td>
-          <td>${it.igst}%</td>
+          ${showGST ? `<td>${it.sgst}%</td><td>${it.cgst}%</td><td>${it.igst}%</td>` : ''}
         </tr>`;
       });
 
       const tblHead = `<thead>
           <tr>
-            <th rowspan="2" style="width:4%">Sr.<br>No.</th>
-            <th rowspan="2" style="width:8%">Cat. #</th>
-            <th rowspan="2" style="width:21%">Description</th>
-            <th rowspan="2" style="width:8%">HSN Code</th>
-            <th rowspan="2" style="width:7%">Pack size</th>
-            <th rowspan="2" style="width:9%">Unit price</th>
-            <th rowspan="2" style="width:5%">QTY.</th>
-            <th rowspan="2" style="width:10%">Total Cost<br>(${curCode})</th>
-            <th colspan="3">GST</th>
+            <th rowspan="${showGST ? 2 : 1}" style="width:4%">Sr.<br>No.</th>
+            <th rowspan="${showGST ? 2 : 1}" style="width:8%">Cat. #</th>
+            <th rowspan="${showGST ? 2 : 1}" style="width:21%">Description</th>
+            <th rowspan="${showGST ? 2 : 1}" style="width:8%">HSN Code</th>
+            <th rowspan="${showGST ? 2 : 1}" style="width:7%">Pack size</th>
+            <th rowspan="${showGST ? 2 : 1}" style="width:9%">Unit price</th>
+            <th rowspan="${showGST ? 2 : 1}" style="width:5%">QTY.</th>
+            <th rowspan="${showGST ? 2 : 1}" style="width:10%">Total Cost<br>(${curCode})</th>
+            ${showGST ? '<th colspan="3">GST</th>' : ''}
           </tr>
-          <tr>
+          ${showGST ? `<tr>
             <th style="width:9%">SGST</th>
             <th style="width:9%">CGST</th>
             <th style="width:9%">IGST</th>
-          </tr>
+          </tr>` : ''}
         </thead>`;
 
       const totalsRows = `
@@ -1450,21 +1455,19 @@
             <td colspan="6" style="text-align:right">Subtotal</td>
             <td>${totalQty}</td>
             <td>${inr(sub)}</td>
-            <td>${inr(tSG)}</td>
-            <td>${inr(tCG)}</td>
-            <td>${inr(tIG)}</td>
+            ${showGST ? `<td>${inr(tSG)}</td><td>${inr(tCG)}</td><td>${inr(tIG)}</td>` : ''}
           </tr>
-          <tr>
+          ${showTransport ? `<tr>
             <td colspan="7" style="text-align:right">Transportation Cost</td>
-            <td colspan="4">${inr(tc)}</td>
+            <td colspan="${showGST ? 4 : 1}">${inr(tc)}</td>
           </tr>
           <tr>
             <td colspan="7" style="text-align:right">${tgr}% GST (Transport)</td>
-            <td colspan="4">${inr(tgAmt)}</td>
-          </tr>
+            <td colspan="${showGST ? 4 : 1}">${inr(tgAmt)}</td>
+          </tr>` : ''}
           <tr class="tot-row">
             <td colspan="7" style="text-align:right"><strong>TOTAL PRICE</strong></td>
-            <td colspan="4"><strong>${inr(grand)}</strong></td>
+            <td colspan="${showGST ? 4 : 1}"><strong>${inr(grand)}</strong></td>
           </tr>`;
 
       const amtWords = `<div class="amt-words"><strong>Amount in Word:</strong>&emsp;${n2w(grand)}</div>`;
@@ -1606,7 +1609,7 @@
         const pageRows = allRows.slice(start, end);
         const bodyContent = pageRows.length
           ? pageRows.join('') + (isLast ? totalsRows : '')
-          : `<tr><td colspan="11" style="padding:14px;text-align:center;color:#bbb;font-style:italic">No items — add items using the left panel</td></tr>${totalsRows}`;
+          : `<tr><td colspan="${totalCols}" style="padding:14px;text-align:center;color:#bbb;font-style:italic">No items — add items using the left panel</td></tr>${totalsRows}`;
 
         if (idx === 0) {
           html += `
