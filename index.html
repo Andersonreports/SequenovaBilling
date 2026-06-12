@@ -70,6 +70,26 @@
       color: #15325c;
     }
 
+    .ex-rate {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #ffffff;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    .ex-rate input {
+      width: 64px;
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
     .hdr-logo-img {
       width: 260px;
       height: 62px;
@@ -991,10 +1011,15 @@
         <option value="invoice">Invoice</option>
         <option value="purchase">Purchase Order</option>
       </select>
-      <select class="doctype-select" id="currency" onchange="renderPreview()">
+      <select class="doctype-select" id="currency" onchange="onCurrencyChange()">
         <option value="INR">₹ Rupees</option>
         <option value="USD">$ Dollars</option>
       </select>
+      <div class="ex-rate" title="Exchange rate used to convert costs when switching currency">
+        <span>1 USD =</span>
+        <input type="number" id="exRate" value="88" min="0" step="0.01" oninput="renderPreview()">
+        <span>INR</span>
+      </div>
     </div>
   </div>
 
@@ -1158,6 +1183,7 @@
     // ── State ──
     let items = [];
     let nid = 1;
+    let prevCurrency = 'INR';
     const termsTemplates = {
       reagents: `1. Price: All prices mentioned above are in INR
 2. Payment: 100% Advanced.
@@ -1182,9 +1208,26 @@
       const isUSD = $v('currency') === 'USD';
       const sym = isUSD ? '$' : '₹';
       const locale = isUSD ? 'en-US' : 'en-IN';
-      return sym + ' ' + Number(n).toLocaleString(locale, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+      const digits = isUSD ? 2 : 0;
+      return sym + ' ' + Number(n).toLocaleString(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits });
     }
     function fmtD(s) { if (!s) return '—'; const [y, m, d] = s.split('-'); return `${d}.${m}.${y}`; }
+    function round2(x) { return Math.round(x * 100) / 100; }
+
+    // ── Convert all cost fields when the currency selection changes ──
+    function onCurrencyChange() {
+      const newCur = $v('currency');
+      if (newCur !== prevCurrency) {
+        const rate = $n('exRate') || 1;
+        const factor = newCur === 'USD' ? (1 / rate) : rate;
+        items.forEach(it => { it.price = round2(it.price * factor); });
+        const tcEl = document.getElementById('tCost');
+        if (tcEl) tcEl.value = round2($n('tCost') * factor);
+        prevCurrency = newCur;
+        renderItemCards();
+      }
+      renderPreview();
+    }
 
     // ── Number → Indian words ──
     function applyTermsTemplate(type) {
@@ -1789,7 +1832,7 @@
     // ── Capture all form data as a plain object ──
     function captureFormData() {
       return {
-        docType: $v('docType'), currency: $v('currency'),
+        docType: $v('docType'), currency: $v('currency'), exRate: $v('exRate'),
         qDate: $v('qDate'), qNo: $v('qNo'),
         bName: $v('bName'), bAddr: $v('bAddr'), bGST: $v('bGST'),
         bAttn: $v('bAttn'), bPhone: $v('bPhone'), bEmail: $v('bEmail'),
@@ -1807,6 +1850,8 @@
       const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
       set('docType', d.docType || 'quotation');
       set('currency', d.currency || 'INR');
+      set('exRate', d.exRate || '88');
+      prevCurrency = d.currency || 'INR';
       set('qDate', d.qDate); set('qNo', d.qNo);
       set('bName', d.bName); set('bAddr', d.bAddr); set('bGST', d.bGST);
       set('bAttn', d.bAttn); set('bPhone', d.bPhone); set('bEmail', d.bEmail);
