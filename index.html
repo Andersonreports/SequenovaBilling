@@ -1240,21 +1240,21 @@
       'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
     const _t = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
     function two(n) { return n < 20 ? _o[n] : _t[Math.floor(n / 10)] + (n % 10 ? ' ' + _o[n % 10] : ''); }
+    function three(n) { return n < 100 ? two(n) : _o[Math.floor(n / 100)] + ' Hundred' + (n % 100 ? ' ' + two(n % 100) : ''); }
     function n2w(x) {
       const isUSD = $v('currency') === 'USD';
       const n = Math.round(x); if (!n) return 'Zero Only';
       const p = []; let r = n;
       if (isUSD) {
-        if (r >= 1000000000) { p.push(two(Math.floor(r / 1000000000)) + ' Billion'); r %= 1000000000; }
-        if (r >= 1000000) { p.push(two(Math.floor(r / 1000000)) + ' Million'); r %= 1000000; }
-        if (r >= 1000) { p.push(two(Math.floor(r / 1000)) + ' Thousand'); r %= 1000; }
+        if (r >= 1000000000) { p.push(three(Math.floor(r / 1000000000)) + ' Billion'); r %= 1000000000; }
+        if (r >= 1000000) { p.push(three(Math.floor(r / 1000000)) + ' Million'); r %= 1000000; }
+        if (r >= 1000) { p.push(three(Math.floor(r / 1000)) + ' Thousand'); r %= 1000; }
       } else {
-        if (r >= 10000000) { p.push(two(Math.floor(r / 10000000)) + ' Crore'); r %= 10000000; }
-        if (r >= 100000) { p.push(two(Math.floor(r / 100000)) + ' Lakh'); r %= 100000; }
-        if (r >= 1000) { p.push(two(Math.floor(r / 1000)) + ' Thousand'); r %= 1000; }
+        if (r >= 10000000) { p.push(three(Math.floor(r / 10000000)) + ' Crore'); r %= 10000000; }
+        if (r >= 100000) { p.push(three(Math.floor(r / 100000)) + ' Lakh'); r %= 100000; }
+        if (r >= 1000) { p.push(three(Math.floor(r / 1000)) + ' Thousand'); r %= 1000; }
       }
-      if (r >= 100) { p.push(_o[Math.floor(r / 100)] + ' Hundred'); r %= 100; }
-      if (r > 0) { p.push(two(r)); }
+      if (r > 0) { p.push(three(r)); }
       return (isUSD ? 'US Dollars ' : 'Rupees ') + p.join(' ') + ' Only';
     }
 
