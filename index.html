@@ -1143,6 +1143,10 @@
         <label>Signatory Name</label>
         <input type="text" id="signatoryName" value="Ms. Vishakha Gayke" oninput="renderPreview()">
       </div>
+      <div class="fg">
+        <label>Mobile Number</label>
+        <input type="text" id="signatoryMobile" placeholder="+91 XXXXXXXXXX" oninput="renderPreview()">
+      </div>
 
       <div class="sec-title">Line Items</div>
       <div id="itemCards"></div>
@@ -1357,15 +1361,25 @@
       document.getElementById('qNoLabel').textContent = isPurchase ? 'Purchase No.' : (isInvoice ? 'Invoice No.' : 'Quote No.');
       const qdate = $v('qDate'), qno = $v('qNo').trim() || '—';
       const tc = $n('tCost'), tgr = $n('tGST');
-      const bankRows = [
+      const bankRows = (isPurchase ? [
+        ['Beneficiary', 'GeneMind Biosciences Company Limited'],
+        ['Tax Number', '914403005990671000'],
+        ['Bank Name', 'QILU BANK CO., LTD.'],
+        ['Branch', 'No.10817, Jingshi Road, Lixia Distict, Jinan City, Shandong Province, China'],
+        ['Account No.', '8661 1731 1996 2880 0284'],
+        ['Swift code', 'JNSHCNBN'],
+        ["Intermediary Bank's Name", 'BANK OF COMMUNICATIONS,(SHANDONG PROVINCIAL BRANCH)'],
+        ['IB Swift Code', 'COMMCNSHJNN']
+      ] : [
         ['Beneficiary', $v('bankBeneficiary')],
         ['Bank Name', $v('bankName')],
         ['Branch Name', $v('bankBranch')],
         ['Account No.', $v('bankAccountNo')],
         ['IFSC Code', $v('bankIfsc')],
         ['Bank Address', $v('bankAddress')]
-      ].map(([label, value]) => `<tr><td class="bl">${label}</td><td class="bc">:</td><td>${h(value) || '&nbsp;'}</td></tr>`).join('');
+      ]).map(([label, value]) => `<tr><td class="bl">${label}</td><td class="bc">:</td><td>${h(value) || '&nbsp;'}</td></tr>`).join('');
       const signatoryName = $v('signatoryName').trim();
+      const signatoryMobile = $v('signatoryMobile').trim();
       const termsText = $v('termsText').trim();
       const termsPageClass = termsText.length > 260 ? ' compact-terms-page' : '';
 
@@ -1594,6 +1608,7 @@
           Yours Truly,<br>
           Sequenova Riverhead Biosciences Solutions<br>
           ${h(signatoryName) || '&nbsp;'}
+          ${signatoryMobile ? `<br>${h(signatoryMobile)}` : ''}
         </div>
         <div class="ty">Thank You for Your Business !</div>
       </div>
@@ -1842,7 +1857,7 @@
         sAttn: $v('sAttn'), sPhone: $v('sPhone'), sEmail: $v('sEmail'),
         tCost: $v('tCost'), tGST: $v('tGST'),
         termsType: $v('termsType'), termsText: $v('termsText'),
-        signatoryName: $v('signatoryName'),
+        signatoryName: $v('signatoryName'), signatoryMobile: $v('signatoryMobile'),
         items: items.map(it => Object.assign({}, it))
       };
     }
@@ -1862,6 +1877,7 @@
       set('tCost', d.tCost); set('tGST', d.tGST);
       set('termsType', d.termsType); set('termsText', d.termsText);
       set('signatoryName', d.signatoryName);
+      set('signatoryMobile', d.signatoryMobile);
       if (Array.isArray(d.items) && d.items.length) {
         items = d.items.map(it => Object.assign({}, it));
         nid = Math.max(...items.map(i => i.id)) + 1;
