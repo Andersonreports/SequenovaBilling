@@ -708,6 +708,10 @@
       background: #d9ead3;
     }
 
+    .doc-purchase .it .item-row td {
+      background: #e3d3f0;
+    }
+
     .it .sub-row td {
       background: #dce8f8;
       font-weight: bold;
@@ -984,6 +988,7 @@
       <select class="doctype-select" id="docType" onchange="renderPreview()">
         <option value="quotation">Quotation</option>
         <option value="invoice">Invoice</option>
+        <option value="purchase">Purchase Order</option>
       </select>
     </div>
   </div>
@@ -1284,10 +1289,11 @@
     function renderPreview() {
       syncShipToBillTo();
       const isInvoice = $v('docType') === 'invoice';
-      const docTitle = isInvoice ? 'INVOICE' : 'QUOTATION';
-      const qnoLabel = isInvoice ? 'Invoice No:' : 'Quote No:';
-      document.getElementById('qInfoTitle').textContent = isInvoice ? 'Invoice Information' : 'Quote Information';
-      document.getElementById('qNoLabel').textContent = isInvoice ? 'Invoice No.' : 'Quote No.';
+      const isPurchase = $v('docType') === 'purchase';
+      const docTitle = isPurchase ? 'PURCHASE ORDER' : (isInvoice ? 'INVOICE' : 'QUOTATION');
+      const qnoLabel = isPurchase ? 'Purchase No:' : (isInvoice ? 'Invoice No:' : 'Quote No:');
+      document.getElementById('qInfoTitle').textContent = isPurchase ? 'Purchase Order Information' : (isInvoice ? 'Invoice Information' : 'Quote Information');
+      document.getElementById('qNoLabel').textContent = isPurchase ? 'Purchase No.' : (isInvoice ? 'Invoice No.' : 'Quote No.');
       const qdate = $v('qDate'), qno = $v('qNo').trim() || '—';
       const tc = $n('tCost'), tgr = $n('tGST');
       const bankRows = [
@@ -1498,7 +1504,7 @@
         }
       }
 
-      const docTypeClass = isInvoice ? ' doc-invoice' : '';
+      const docTypeClass = isPurchase ? ' doc-purchase' : isInvoice ? ' doc-invoice' : '';
       const termsPage = `
     <div class="quote-page${termsPageClass}${docTypeClass}">
       <div class="page-hdr"></div>
@@ -1510,10 +1516,10 @@
           <div style="font-size:15px;font-weight:bold;text-align:right;justify-self:end">${h(qno)}</div>
         </div>
       </div>
-      <div class="terms-sec">
+      ${isPurchase ? '' : `<div class="terms-sec">
         <h3>Terms &amp; Conditions:</h3>
         ${h(termsText) || '&nbsp;'}
-      </div>
+      </div>`}
       <div class="fixed-bank-block">
         <div class="bank-sec">
           <h3>Bank Details:</h3>
@@ -1595,7 +1601,8 @@
     // ── Download PDF ──
     function downloadPDF() {
       acRecordAll();
-      const fallbackName = $v('docType') === 'invoice' ? 'invoice' : 'quotation';
+      const docType = $v('docType');
+      const fallbackName = docType === 'invoice' ? 'invoice' : docType === 'purchase' ? 'purchase_order' : 'quotation';
       const qno = (document.getElementById('qNo').value.trim() || fallbackName).replace(/[^a-zA-Z0-9_-]/g, '_');
       const btn = document.querySelector('.btn-print');
       btn.disabled = true;
