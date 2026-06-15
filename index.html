@@ -1132,15 +1132,39 @@
         <textarea id="termsText" oninput="renderPreview()"></textarea>
       </div>
 
-      <!-- Bank details are fixed and not editable from the sidebar, but still appear on the bill -->
-      <input type="hidden" id="bankBeneficiary" value="Sequenova Riverhead Biosciences Solutions">
-      <input type="hidden" id="bankName" value="ICICI Bank">
-      <input type="hidden" id="bankBranch" value="S. Kolathur">
-      <input type="hidden" id="bankBranchCode" value="">
-      <input type="hidden" id="bankAccountNo" value="500405000023">
-      <input type="hidden" id="bankIfsc" value="ICIC0005004">
-      <input type="hidden" id="bankSwift" value="">
-      <textarea id="bankAddress" style="display:none">ICICI Bank Ltd, KPN Towers, No. 4/285, Viduthalai Nagar, S. Kolathur Main Road, Chennai, Tamil Nadu, 600129</textarea>
+      <div id="bankFieldsWrap" style="display:none">
+        <div class="sec-title">Bank Details</div>
+        <div class="fg">
+          <label>Beneficiary</label>
+          <input type="text" id="bankBeneficiary" value="Sequenova Riverhead Biosciences Solutions" oninput="renderPreview()">
+        </div>
+        <div class="frow">
+          <div class="fg">
+            <label>Bank Name</label>
+            <input type="text" id="bankName" value="ICICI Bank" oninput="renderPreview()">
+          </div>
+          <div class="fg">
+            <label>Branch Name</label>
+            <input type="text" id="bankBranch" value="S. Kolathur" oninput="renderPreview()">
+          </div>
+        </div>
+        <div class="frow">
+          <div class="fg">
+            <label>Account No.</label>
+            <input type="text" id="bankAccountNo" value="500405000023" oninput="renderPreview()">
+          </div>
+          <div class="fg">
+            <label>IFSC Code</label>
+            <input type="text" id="bankIfsc" value="ICIC0005004" oninput="renderPreview()">
+          </div>
+        </div>
+        <input type="hidden" id="bankBranchCode" value="">
+        <input type="hidden" id="bankSwift" value="">
+        <div class="fg">
+          <label>Bank Address</label>
+          <textarea id="bankAddress" oninput="renderPreview()">ICICI Bank Ltd, KPN Towers, No. 4/285, Viduthalai Nagar, S. Kolathur Main Road, Chennai, Tamil Nadu, 600129</textarea>
+        </div>
+      </div>
 
       <div class="sec-title">Signatory</div>
       <div class="fg">
@@ -1363,6 +1387,8 @@
       const titleStyle = isPurchase ? 'font-size:18px;letter-spacing:2px;' : '';
       const p2TitleStyle = isPurchase ? 'font-size:16px;letter-spacing:1.5px;' : 'font-size:20px;letter-spacing:3px;';
       const qnoLabel = isPurchase ? 'Purchase No:' : (isInvoice ? 'Invoice No:' : 'Quote No:');
+      const billToLabel = isPurchase ? 'Shipper Details' : 'Bill To';
+      const shipToLabel = isPurchase ? 'Consignee Details' : 'Ship To';
       document.getElementById('qInfoTitle').textContent = isPurchase ? 'Purchase Order Information' : (isInvoice ? 'Invoice Information' : 'Quote Information');
       document.getElementById('qNoLabel').textContent = isPurchase ? 'Purchase No.' : (isInvoice ? 'Invoice No.' : 'Quote No.');
       const qdate = $v('qDate'), qno = $v('qNo').trim() || '—';
@@ -1378,6 +1404,7 @@
       const signatoryName = $v('signatoryName').trim();
       const signatoryMobile = $v('signatoryMobile').trim();
       document.getElementById('mobileFieldWrap').style.display = isPurchase ? '' : 'none';
+      document.getElementById('bankFieldsWrap').style.display = isPurchase ? '' : 'none';
       const termsText = $v('termsText').trim();
       const termsPageClass = termsText.length > 260 ? ' compact-terms-page' : '';
 
@@ -1393,7 +1420,7 @@
       ].filter(Boolean);
       const billBlock = billParts.length
         ? billParts.join('')
-        : '<span class="ph">Fill Bill To details in the left panel</span>';
+        : `<span class="ph">Fill ${billToLabel} in the left panel</span>`;
 
       // Ship To
       const sn = $v('sName'), si = $v('sInst'), sa = $v('sAddr'), sat = $v('sAttn'), sp = $v('sPhone'), se = $v('sEmail');
@@ -1407,7 +1434,7 @@
       ].filter(Boolean);
       const shipBlock = shipParts.length
         ? shipParts.join('')
-        : '<span class="ph">Fill Ship To details in the left panel</span>';
+        : `<span class="ph">Fill ${shipToLabel} in the left panel</span>`;
 
       // Compute totals (per-item GST rates)
       let sub = 0, tSG = 0, tCG = 0, tIG = 0, totalQty = 0;
@@ -1495,7 +1522,7 @@
         <div class="dh"><div class="dh-row1"><div></div><div class="dh-title" style="${titleStyle}">${docTitle}</div><div class="dh-qno"><span class="lbl">${qnoLabel}</span><span class="val">${h(qno)}</span><span class="lbl">Date:</span><span class="val">${fmtD(qdate)}</span></div></div></div>
         <table class="addr-tbl">
           <thead><tr>
-            <th style="width:50%">Bill To</th><th style="width:50%">Ship To</th>
+            <th style="width:50%">${billToLabel}</th><th style="width:50%">${shipToLabel}</th>
           </tr></thead>
           <tbody><tr>
             <td>${billBlock}</td><td>${shipBlock}</td>
@@ -1596,10 +1623,10 @@
           <div style="font-size:15px;font-weight:bold;text-align:right;justify-self:end">${h(qno)}</div>
         </div>
       </div>
-      ${isPurchase ? '' : `<div class="terms-sec">
+      <div class="terms-sec">
         <h3>Terms &amp; Conditions:</h3>
         ${h(termsText) || '&nbsp;'}
-      </div>`}
+      </div>
       <div class="fixed-bank-block">
         <div class="bank-sec">
           <h3>Bank Details:</h3>
@@ -1642,8 +1669,8 @@
       <table class="addr-tbl">
         <thead>
           <tr>
-            <th style="width:50%">Bill To</th>
-            <th style="width:50%">Ship To</th>
+            <th style="width:50%">${billToLabel}</th>
+            <th style="width:50%">${shipToLabel}</th>
           </tr>
         </thead>
         <tbody>
@@ -1861,6 +1888,8 @@
         tCost: $v('tCost'), tGST: $v('tGST'), freight: $v('freight'),
         termsType: $v('termsType'), termsText: $v('termsText'),
         signatoryName: $v('signatoryName'), signatoryMobile: $v('signatoryMobile'),
+        bankBeneficiary: $v('bankBeneficiary'), bankName: $v('bankName'), bankBranch: $v('bankBranch'),
+        bankAccountNo: $v('bankAccountNo'), bankIfsc: $v('bankIfsc'), bankAddress: $v('bankAddress'),
         items: items.map(it => Object.assign({}, it))
       };
     }
@@ -1881,6 +1910,12 @@
       set('termsType', d.termsType); set('termsText', d.termsText);
       set('signatoryName', d.signatoryName);
       set('signatoryMobile', d.signatoryMobile);
+      set('bankBeneficiary', d.bankBeneficiary || 'Sequenova Riverhead Biosciences Solutions');
+      set('bankName', d.bankName || 'ICICI Bank');
+      set('bankBranch', d.bankBranch || 'S. Kolathur');
+      set('bankAccountNo', d.bankAccountNo || '500405000023');
+      set('bankIfsc', d.bankIfsc || 'ICIC0005004');
+      set('bankAddress', d.bankAddress || 'ICICI Bank Ltd, KPN Towers, No. 4/285, Viduthalai Nagar, S. Kolathur Main Road, Chennai, Tamil Nadu, 600129');
       if (Array.isArray(d.items) && d.items.length) {
         items = d.items.map(it => Object.assign({}, it));
         nid = Math.max(...items.map(i => i.id)) + 1;
