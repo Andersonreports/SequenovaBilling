@@ -230,6 +230,38 @@
       box-shadow: 0 1px 5px rgba(13, 110, 138, 0.22);
     }
 
+    .btn-new {
+      background: linear-gradient(145deg, #6b7280, #4b5563);
+      color: white;
+      border: none;
+      border-bottom: 3px solid #374151;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      box-shadow: 0 4px 14px rgba(75, 85, 99, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      transition: background .18s, transform .12s, box-shadow .18s;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+
+    .btn-new:hover {
+      background: linear-gradient(145deg, #4b5563, #374151);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 22px rgba(75, 85, 99, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-new:active {
+      transform: translateY(2px);
+      border-bottom-width: 1px;
+      box-shadow: 0 1px 5px rgba(75, 85, 99, 0.22);
+    }
+
     .sqn-toast {
       position: fixed;
       bottom: 28px;
@@ -1020,6 +1052,13 @@
         <input type="number" id="exRate" value="88" min="0" step="0.01" oninput="renderPreview()">
         <span>INR</span>
       </div>
+      <button class="btn-new" onclick="startNewBill()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        New Bill
+      </button>
     </div>
   </div>
 
@@ -1929,6 +1968,14 @@
       if (sameCb) { sameCb.checked = false; handleSameAsBillTo(false); }
       document.querySelector('.form-panel').scrollTop = 0;
       showToast(msg || 'Quote loaded — ready to edit.');
+    }
+
+    // ── Reset everything to start a fresh bill ──
+    function startNewBill() {
+      if (!confirm('Start a new bill? Any unsaved changes will be lost.')) return;
+      populateFormFromData({}, 'New bill started — ready to fill in.');
+      document.getElementById('qDate').value = new Date().toISOString().split('T')[0];
+      renderPreview();
     }
 
     // ── Lazy-load an external script once ──
