@@ -1171,37 +1171,49 @@
         <textarea id="termsText" oninput="renderPreview()"></textarea>
       </div>
 
+      <!-- Bank details for Quotation/Invoice are fixed and not editable from the sidebar, but still appear on the bill -->
+      <input type="hidden" id="bankBeneficiary" value="Sequenova Riverhead Biosciences Solutions">
+      <input type="hidden" id="bankName" value="ICICI Bank">
+      <input type="hidden" id="bankBranch" value="S. Kolathur">
+      <input type="hidden" id="bankAccountNo" value="500405000023">
+      <input type="hidden" id="bankIfsc" value="ICIC0005004">
+      <textarea id="bankAddress" style="display:none">ICICI Bank Ltd, KPN Towers, No. 4/285, Viduthalai Nagar, S. Kolathur Main Road, Chennai, Tamil Nadu, 600129</textarea>
+
       <div id="bankFieldsWrap" style="display:none">
         <div class="sec-title">Bank Details</div>
         <div class="fg">
           <label>Beneficiary</label>
-          <input type="text" id="bankBeneficiary" value="Sequenova Riverhead Biosciences Solutions" oninput="renderPreview()">
+          <input type="text" id="poBankBeneficiary" value="GeneMind Biosciences Company Limited" oninput="renderPreview()">
+        </div>
+        <div class="fg">
+          <label>Tax Number</label>
+          <input type="text" id="poBankTaxNumber" value="914403005990671000" oninput="renderPreview()">
         </div>
         <div class="frow">
           <div class="fg">
             <label>Bank Name</label>
-            <input type="text" id="bankName" value="ICICI Bank" oninput="renderPreview()">
+            <input type="text" id="poBankName" value="QILU BANK CO., LTD." oninput="renderPreview()">
           </div>
           <div class="fg">
-            <label>Branch Name</label>
-            <input type="text" id="bankBranch" value="S. Kolathur" oninput="renderPreview()">
+            <label>Swift Code</label>
+            <input type="text" id="poBankSwift" value="JNSHCNBN" oninput="renderPreview()">
           </div>
         </div>
-        <div class="frow">
-          <div class="fg">
-            <label>Account No.</label>
-            <input type="text" id="bankAccountNo" value="500405000023" oninput="renderPreview()">
-          </div>
-          <div class="fg">
-            <label>IFSC Code</label>
-            <input type="text" id="bankIfsc" value="ICIC0005004" oninput="renderPreview()">
-          </div>
-        </div>
-        <input type="hidden" id="bankBranchCode" value="">
-        <input type="hidden" id="bankSwift" value="">
         <div class="fg">
-          <label>Bank Address</label>
-          <textarea id="bankAddress" oninput="renderPreview()">ICICI Bank Ltd, KPN Towers, No. 4/285, Viduthalai Nagar, S. Kolathur Main Road, Chennai, Tamil Nadu, 600129</textarea>
+          <label>Branch</label>
+          <textarea id="poBankBranch" oninput="renderPreview()">No.10817, Jingshi Road, Lixia District, Jinan City, Shandong Province, China</textarea>
+        </div>
+        <div class="fg">
+          <label>Account No.</label>
+          <input type="text" id="poBankAccountNo" value="8661 1731 1996 2880 0284" oninput="renderPreview()">
+        </div>
+        <div class="fg">
+          <label>Intermediary Bank's Name</label>
+          <input type="text" id="poBankIntermediaryName" value="BANK OF COMMUNICATIONS,(SHANDONG PROVINCIAL BRANCH)" oninput="renderPreview()">
+        </div>
+        <div class="fg">
+          <label>IB Swift Code</label>
+          <input type="text" id="poBankIntermediarySwift" value="COMMCNSHJNN" oninput="renderPreview()">
         </div>
       </div>
 
@@ -1326,7 +1338,7 @@
         if (r >= 1000) { p.push(three(Math.floor(r / 1000)) + ' Thousand'); r %= 1000; }
       }
       if (r > 0) { p.push(three(r)); }
-      return (isUSD ? 'US Dollars ' : 'Rupees ') + p.join(' ') + ' Only';
+      return isUSD ? (p.join(' ') + ' US Dollars Only') : ('Rupees ' + p.join(' ') + ' Only');
     }
 
     // ── Item management ──
@@ -1432,14 +1444,23 @@
       document.getElementById('qNoLabel').textContent = isPurchase ? 'Purchase No.' : (isInvoice ? 'Invoice No.' : 'Quote No.');
       const qdate = $v('qDate'), qno = $v('qNo').trim() || '—';
       const tc = $n('tCost'), tgr = $n('tGST'), freight = $n('freight');
-      const bankRows = [
+      const bankRows = (isPurchase ? [
+        ['Beneficiary', $v('poBankBeneficiary')],
+        ['Tax Number', $v('poBankTaxNumber')],
+        ['Bank Name', $v('poBankName')],
+        ['Branch', $v('poBankBranch')],
+        ['Account No.', $v('poBankAccountNo')],
+        ['Swift Code', $v('poBankSwift')],
+        ["Intermediary Bank's Name", $v('poBankIntermediaryName')],
+        ['IB Swift Code', $v('poBankIntermediarySwift')]
+      ] : [
         ['Beneficiary', $v('bankBeneficiary')],
         ['Bank Name', $v('bankName')],
         ['Branch Name', $v('bankBranch')],
         ['Account No.', $v('bankAccountNo')],
         ['IFSC Code', $v('bankIfsc')],
         ['Bank Address', $v('bankAddress')]
-      ].map(([label, value]) => `<tr><td class="bl">${label}</td><td class="bc">:</td><td>${h(value) || '&nbsp;'}</td></tr>`).join('');
+      ]).map(([label, value]) => `<tr><td class="bl">${label}</td><td class="bc">:</td><td>${h(value) || '&nbsp;'}</td></tr>`).join('');
       const signatoryName = $v('signatoryName').trim();
       const signatoryMobile = $v('signatoryMobile').trim();
       document.getElementById('mobileFieldWrap').style.display = isPurchase ? '' : 'none';
@@ -1558,7 +1579,7 @@
       const mWrap = document.createElement('div');
       mWrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:714px;visibility:hidden;pointer-events:none;font-family:"Times New Roman",Times,serif;font-size:15px;line-height:1.45;color:#111;';
       mWrap.innerHTML = `
-        <div class="dh"><div class="dh-row1"><div></div><div class="dh-title" style="${titleStyle}">${docTitle}</div><div class="dh-qno"><span class="lbl">${qnoLabel}</span><span class="val">${h(qno)}</span><span class="lbl">Date:</span><span class="val">${fmtD(qdate)}</span></div></div></div>
+        <div class="dh"><div class="dh-row1"><div></div><div class="dh-title" style="${titleStyle}">${docTitle}</div><div class="dh-qno">${isPurchase ? '' : `<span class="lbl">${qnoLabel}</span><span class="val">${h(qno)}</span>`}<span class="lbl">Date:</span><span class="val">${fmtD(qdate)}</span></div></div></div>
         <table class="addr-tbl">
           <thead><tr>
             <th style="width:50%">${billToLabel}</th><th style="width:50%">${shipToLabel}</th>
@@ -1702,7 +1723,7 @@
         <div class="dh-row1">
           <div></div>
           <div class="dh-title" style="${titleStyle}">${docTitle}</div>
-          <div class="dh-qno"><span class="lbl">${qnoLabel}</span><span class="val">${h(qno)}</span><span class="lbl">Date:</span><span class="val">${fmtD(qdate)}</span></div>
+          <div class="dh-qno">${isPurchase ? '' : `<span class="lbl">${qnoLabel}</span><span class="val">${h(qno)}</span>`}<span class="lbl">Date:</span><span class="val">${fmtD(qdate)}</span></div>
         </div>
       </div>
       <table class="addr-tbl">
@@ -1927,8 +1948,10 @@
         tCost: $v('tCost'), tGST: $v('tGST'), freight: $v('freight'),
         termsType: $v('termsType'), termsText: $v('termsText'),
         signatoryName: $v('signatoryName'), signatoryMobile: $v('signatoryMobile'),
-        bankBeneficiary: $v('bankBeneficiary'), bankName: $v('bankName'), bankBranch: $v('bankBranch'),
-        bankAccountNo: $v('bankAccountNo'), bankIfsc: $v('bankIfsc'), bankAddress: $v('bankAddress'),
+        poBankBeneficiary: $v('poBankBeneficiary'), poBankTaxNumber: $v('poBankTaxNumber'),
+        poBankName: $v('poBankName'), poBankSwift: $v('poBankSwift'), poBankBranch: $v('poBankBranch'),
+        poBankAccountNo: $v('poBankAccountNo'), poBankIntermediaryName: $v('poBankIntermediaryName'),
+        poBankIntermediarySwift: $v('poBankIntermediarySwift'),
         items: items.map(it => Object.assign({}, it))
       };
     }
@@ -1949,12 +1972,14 @@
       set('termsType', d.termsType); set('termsText', d.termsText);
       set('signatoryName', d.signatoryName);
       set('signatoryMobile', d.signatoryMobile);
-      set('bankBeneficiary', d.bankBeneficiary || 'Sequenova Riverhead Biosciences Solutions');
-      set('bankName', d.bankName || 'ICICI Bank');
-      set('bankBranch', d.bankBranch || 'S. Kolathur');
-      set('bankAccountNo', d.bankAccountNo || '500405000023');
-      set('bankIfsc', d.bankIfsc || 'ICIC0005004');
-      set('bankAddress', d.bankAddress || 'ICICI Bank Ltd, KPN Towers, No. 4/285, Viduthalai Nagar, S. Kolathur Main Road, Chennai, Tamil Nadu, 600129');
+      set('poBankBeneficiary', d.poBankBeneficiary || 'GeneMind Biosciences Company Limited');
+      set('poBankTaxNumber', d.poBankTaxNumber || '914403005990671000');
+      set('poBankName', d.poBankName || 'QILU BANK CO., LTD.');
+      set('poBankSwift', d.poBankSwift || 'JNSHCNBN');
+      set('poBankBranch', d.poBankBranch || 'No.10817, Jingshi Road, Lixia District, Jinan City, Shandong Province, China');
+      set('poBankAccountNo', d.poBankAccountNo || '8661 1731 1996 2880 0284');
+      set('poBankIntermediaryName', d.poBankIntermediaryName || 'BANK OF COMMUNICATIONS,(SHANDONG PROVINCIAL BRANCH)');
+      set('poBankIntermediarySwift', d.poBankIntermediarySwift || 'COMMCNSHJNN');
       if (Array.isArray(d.items) && d.items.length) {
         items = d.items.map(it => Object.assign({}, it));
         nid = Math.max(...items.map(i => i.id)) + 1;
