@@ -6,6 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="format-detection" content="telephone=no,address=no,email=no">
   <title>Sequenova Bill</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tinos:ital,wght@0,400;0,700;1,400;1,700&family=Carlito:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     *,
@@ -531,7 +534,7 @@
       max-width: 794px;
       min-height: 1123px;
       padding: 172px 40px 130px;
-      font-family: 'Times New Roman', Times, serif;
+      font-family: 'Tinos', 'Times New Roman', Times, serif;
       font-size: 15px;
       line-height: 1.45;
       box-shadow: 0 12px 48px rgba(15, 40, 80, 0.28), 0 4px 12px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -780,6 +783,13 @@
       text-align: left;
     }
 
+    .gst-amt {
+      display: block;
+      font-size: 11px;
+      font-weight: normal;
+      color: #555;
+    }
+
     .ph {
       color: #bbb;
       font-style: italic;
@@ -812,13 +822,13 @@
       font-size: 15px;
       line-height: 1.75;
       margin-bottom: 22px;
-      font-family: Calibri, 'Segoe UI', Arial, sans-serif;
+      font-family: 'Carlito', Calibri, 'Segoe UI', Arial, sans-serif;
     }
 
     .terms-sec h3 {
       font-size: 24px;
       margin-bottom: 6px;
-      font-family: Calibri, 'Segoe UI', Arial, sans-serif;
+      font-family: 'Carlito', Calibri, 'Segoe UI', Arial, sans-serif;
       font-weight: bold;
     }
 
@@ -827,19 +837,19 @@
       line-height: 1.85;
       margin-bottom: 24px;
       font-weight: normal;
-      font-family: Calibri, 'Segoe UI', Arial, sans-serif;
+      font-family: 'Carlito', Calibri, 'Segoe UI', Arial, sans-serif;
     }
 
     .bank-sec h3 {
       font-size: 24px;
       margin-bottom: 6px;
-      font-family: Calibri, 'Segoe UI', Arial, sans-serif;
+      font-family: 'Carlito', Calibri, 'Segoe UI', Arial, sans-serif;
     }
 
     .bank-tbl {
       border-collapse: collapse;
       font-size: 15px;
-      font-family: Calibri, 'Segoe UI', Arial, sans-serif;
+      font-family: 'Carlito', Calibri, 'Segoe UI', Arial, sans-serif;
     }
 
     .bank-tbl td {
@@ -865,7 +875,7 @@
       font-size: 15px;
       line-height: 1.9;
       text-align: left;
-      font-family: Calibri, 'Segoe UI', Arial, sans-serif;
+      font-family: 'Carlito', Calibri, 'Segoe UI', Arial, sans-serif;
     }
 
     .ty {
@@ -1524,7 +1534,7 @@
           <td>${inr(it.price)}</td>
           <td>${it.qty}</td>
           <td>${inr(total)}</td>
-          ${showGST ? `<td>${it.sgst}%</td><td>${it.cgst}%</td><td>${it.igst}%</td>` : ''}
+          ${showGST ? `<td>${it.sgst}%<span class="gst-amt">${inr(total * it.sgst / 100)}</span></td><td>${it.cgst}%<span class="gst-amt">${inr(total * it.cgst / 100)}</span></td><td>${it.igst}%<span class="gst-amt">${inr(total * it.igst / 100)}</span></td>` : ''}
         </tr>`;
       });
 
@@ -1577,7 +1587,7 @@
       // Render actual elements into a hidden off-screen div using real CSS classes so
       // offsetHeight reflects true rendered heights (multi-line descriptions, full addresses, etc.)
       const mWrap = document.createElement('div');
-      mWrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:714px;visibility:hidden;pointer-events:none;font-family:"Times New Roman",Times,serif;font-size:15px;line-height:1.45;color:#111;';
+      mWrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:714px;visibility:hidden;pointer-events:none;font-family:"Tinos","Times New Roman",Times,serif;font-size:15px;line-height:1.45;color:#111;';
       mWrap.innerHTML = `
         <div class="dh"><div class="dh-row1"><div></div><div class="dh-title" style="${titleStyle}">${docTitle}</div><div class="dh-qno">${isPurchase ? '' : `<span class="lbl">${qnoLabel}</span><span class="val">${h(qno)}</span>`}<span class="lbl">Date:</span><span class="val">${fmtD(qdate)}</span></div></div></div>
         <table class="addr-tbl">
@@ -1652,24 +1662,23 @@
         cidx += n;
       }
 
-      // When 3+ items are added, stretch the last page's item rows to fill any
-      // leftover vertical space so the page doesn't look empty. Only the last
-      // page can have free space (earlier pages are packed to their budget).
-      let lastRowPad = 8; // matches base .it td vertical padding
-      if (allRows.length >= 3) {
-        const last = buckets[buckets.length - 1];
-        const lastCount = last.end - last.start;
-        if (lastCount > 0) {
-          const headOverhead = buckets.length === 1 ? (dhH + addrH + thH) : (p2HH + thH);
-          const rowsH = rowH.slice(last.start, last.end).reduce((s, v) => s + v, 0);
-          const FILL_BUFFER = 24; // keep a little clearance above the footer
-          const leftover = AVAIL - headOverhead - rowsH - totH - amtH - FILL_BUFFER;
-          if (leftover > 0) {
-            // Distribute the leftover height evenly across the rows (split top/bottom).
-            lastRowPad = Math.min(8 + (leftover / lastCount) / 2, 48);
-          }
-        }
-      }
+      // Stretch each page's item rows to fill any leftover vertical space so no
+      // page looks mostly empty — a page only stops gaining items when the next
+      // one genuinely doesn't fit, so any remainder should visually expand the
+      // rows that are already there rather than sit blank above the footer.
+      const FILL_BUFFER = 24; // keep a little clearance above the footer
+      const rowPadByBucket = buckets.map((b, idx) => {
+        const count = b.end - b.start;
+        if (count <= 0) return 8;
+        const isLastBucket = idx === buckets.length - 1;
+        const headOverhead = idx === 0 ? (dhH + addrH + thH) : (p2HH + thH);
+        const reserve = isLastBucket ? (totH + amtH) : 0;
+        const rowsH = rowH.slice(b.start, b.end).reduce((s, v) => s + v, 0);
+        const leftover = AVAIL - headOverhead - rowsH - reserve - FILL_BUFFER;
+        if (leftover <= 0) return 8;
+        // Distribute the leftover height evenly across the rows (split top/bottom).
+        return Math.min(8 + (leftover / count) / 2, 100);
+      });
 
       const docTypeClass = isPurchase ? ' doc-purchase' : isInvoice ? ' doc-invoice' : '';
       const termsPage = `
@@ -1740,7 +1749,7 @@
           </tr>
         </tbody>
       </table>
-      <table class="it">${tblHead}<tbody${isLast ? ` style="--row-pad:${lastRowPad}px"` : ''}>${bodyContent}</tbody></table>
+      <table class="it">${tblHead}<tbody style="--row-pad:${rowPadByBucket[idx]}px">${bodyContent}</tbody></table>
       ${isLast ? amtWords : ''}
     </div>`;
         } else {
@@ -1756,7 +1765,7 @@
           <div style="font-size:15px;font-weight:bold;text-align:right;justify-self:end">${h(qno)}</div>
         </div>
       </div>
-      <table class="it">${tblHead}<tbody${isLast ? ` style="--row-pad:${lastRowPad}px"` : ''}>${bodyContent}</tbody></table>
+      <table class="it">${tblHead}<tbody style="--row-pad:${rowPadByBucket[idx]}px">${bodyContent}</tbody></table>
       ${isLast ? amtWords : ''}
     </div>`;
         }
@@ -1813,37 +1822,47 @@
       // single-page canvases. The first page can auto-paginate a spurious blank
       // overflow page (1123px vs A4's 1122.52px), so drop any extra pages before
       // appending the rest.
-      html2pdf().set(opts).from(clonePage(pageEls[0])).toPdf().get('pdf').then(function (pdf) {
-        while (pdf.internal.getNumberOfPages() > 1) {
-          pdf.deletePage(pdf.internal.getNumberOfPages());
-        }
-        const appendNext = (i) => {
-          if (i >= pageEls.length) {
-            try {
-              const pdfBuf = pdf.output('arraybuffer');
-              const tag = '\n%SeqBillData:' + btoa(encodeURIComponent(JSON.stringify(captureFormData()))) + '\n';
-              const tagBytes = new TextEncoder().encode(tag);
-              const out = new Uint8Array(pdfBuf.byteLength + tagBytes.byteLength);
-              out.set(new Uint8Array(pdfBuf));
-              out.set(tagBytes, pdfBuf.byteLength);
-              const url = URL.createObjectURL(new Blob([out], { type: 'application/pdf' }));
-              const a = document.createElement('a');
-              a.href = url; a.download = qno + '.pdf'; a.click();
-              setTimeout(() => URL.revokeObjectURL(url), 60000);
-            } catch (_) {
-              pdf.save(qno + '.pdf');
-            }
-            restore();
-            return;
+      const generate = () => {
+        html2pdf().set(opts).from(clonePage(pageEls[0])).toPdf().get('pdf').then(function (pdf) {
+          while (pdf.internal.getNumberOfPages() > 1) {
+            pdf.deletePage(pdf.internal.getNumberOfPages());
           }
-          html2pdf().set(opts).from(clonePage(pageEls[i])).toCanvas().get('canvas').then(function (canvas) {
-            pdf.addPage();
-            pdf.addImage(canvas.toDataURL('image/jpeg', 0.82), 'JPEG', 0, 0, 210, 297);
-            appendNext(i + 1);
-          }).catch(fail);
-        };
-        appendNext(1);
-      }).catch(fail);
+          const appendNext = (i) => {
+            if (i >= pageEls.length) {
+              try {
+                const pdfBuf = pdf.output('arraybuffer');
+                const tag = '\n%SeqBillData:' + btoa(encodeURIComponent(JSON.stringify(captureFormData()))) + '\n';
+                const tagBytes = new TextEncoder().encode(tag);
+                const out = new Uint8Array(pdfBuf.byteLength + tagBytes.byteLength);
+                out.set(new Uint8Array(pdfBuf));
+                out.set(tagBytes, pdfBuf.byteLength);
+                const url = URL.createObjectURL(new Blob([out], { type: 'application/pdf' }));
+                const a = document.createElement('a');
+                a.href = url; a.download = qno + '.pdf'; a.click();
+                setTimeout(() => URL.revokeObjectURL(url), 60000);
+              } catch (_) {
+                pdf.save(qno + '.pdf');
+              }
+              restore();
+              return;
+            }
+            html2pdf().set(opts).from(clonePage(pageEls[i])).toCanvas().get('canvas').then(function (canvas) {
+              pdf.addPage();
+              pdf.addImage(canvas.toDataURL('image/jpeg', 0.82), 'JPEG', 0, 0, 210, 297);
+              appendNext(i + 1);
+            }).catch(fail);
+          };
+          appendNext(1);
+        }).catch(fail);
+      };
+
+      // The page text uses web fonts (Tinos/Carlito) loaded via Google Fonts.
+      // If html2canvas snapshots before the client's browser has finished
+      // downloading them, it rasterizes mid-swap and glyphs can overlap/garble —
+      // waiting for document.fonts.ready guarantees the same fonts are painted
+      // for every client regardless of network speed or installed system fonts.
+      const fontsReady = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+      fontsReady.then(generate, generate);
     }
 
     // ── Autocomplete (localStorage-backed, suggests after 2 prior entries) ──
@@ -2566,6 +2585,10 @@
       document.getElementById('qDate').value = new Date().toISOString().split('T')[0];
       renderItemCards();
       renderPreview();
+      // Re-measure/re-render once the web fonts actually finish loading — the
+      // first render may have measured against a fallback font, which can
+      // throw off row-height pagination and glyph spacing.
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(renderPreview);
       // Prevent mouse wheel from changing number input values
       document.addEventListener('wheel', () => {
         if (document.activeElement?.type === 'number') document.activeElement.blur();
