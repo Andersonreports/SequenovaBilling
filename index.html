@@ -1677,7 +1677,7 @@
         const leftover = AVAIL - headOverhead - rowsH - reserve - FILL_BUFFER;
         if (leftover <= 0) return 8;
         // Distribute the leftover height evenly across the rows (split top/bottom).
-        return Math.min(8 + (leftover / count) / 2, 100);
+        return Math.min(8 + (leftover / count) / 2, 22);
       });
 
       const docTypeClass = isPurchase ? ' doc-purchase' : isInvoice ? ' doc-invoice' : '';
