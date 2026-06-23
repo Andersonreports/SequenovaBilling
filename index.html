@@ -1589,7 +1589,7 @@
       const mWrap = document.createElement('div');
       mWrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:714px;visibility:hidden;pointer-events:none;font-family:"Tinos","Times New Roman",Times,serif;font-size:15px;line-height:1.45;color:#111;';
       mWrap.innerHTML = `
-        <div class="dh"><div class="dh-row1"><div></div><div class="dh-title" style="${titleStyle}">${docTitle}</div><div class="dh-qno">${isPurchase ? '' : `<span class="lbl">${qnoLabel}</span><span class="val">${h(qno)}</span>`}<span class="lbl">Date:</span><span class="val">${fmtD(qdate)}</span></div></div></div>
+        <div class="dh"><div class="dh-row1"><div></div><div class="dh-title" style="${titleStyle}">${docTitle}</div><div class="dh-qno"><span class="lbl">${qnoLabel}</span><span class="val">${h(qno)}</span><span class="lbl">Date:</span><span class="val">${fmtD(qdate)}</span></div></div></div>
         <table class="addr-tbl">
           <thead><tr>
             <th style="width:50%">${billToLabel}</th><th style="width:50%">${shipToLabel}</th>
@@ -1732,7 +1732,7 @@
         <div class="dh-row1">
           <div></div>
           <div class="dh-title" style="${titleStyle}">${docTitle}</div>
-          <div class="dh-qno">${isPurchase ? '' : `<span class="lbl">${qnoLabel}</span><span class="val">${h(qno)}</span>`}<span class="lbl">Date:</span><span class="val">${fmtD(qdate)}</span></div>
+          <div class="dh-qno"><span class="lbl">${qnoLabel}</span><span class="val">${h(qno)}</span><span class="lbl">Date:</span><span class="val">${fmtD(qdate)}</span></div>
         </div>
       </div>
       <table class="addr-tbl">
