@@ -787,6 +787,14 @@
       color: #555;
     }
 
+    .it .item-row td.gst-pct {
+      background: #f0f0f0 !important;
+      padding: 5px 7px;
+      font-size: 12px;
+      font-weight: bold;
+      color: #444;
+    }
+
     .ph {
       color: #bbb;
       font-style: italic;
@@ -1520,20 +1528,42 @@
       const showFreight = isPurchase && freight > 0;
       const totalCols = 8 + (showGST ? 3 : 0);
 
-      // Build all item row HTML
+      // Build all item row HTML.
+      // When GST columns are shown each item renders as TWO rows:
+      //   row 1 — left data columns (rowspan=2) + GST percentage cells
+      //   row 2 — GST amount cells only
       const allRows = items.map((it, i) => {
         const total = it.price * it.qty;
+        if (!showGST) {
+          return `<tr class="item-row">
+            <td>${i + 1}</td>
+            <td>${h(it.cat) || '—'}</td>
+            <td class="left">${h(it.desc) || '—'}</td>
+            <td>${h(it.hsn) || '—'}</td>
+            <td>${h(it.pack) || '—'}</td>
+            <td>${inr(it.price)}</td>
+            <td>${it.qty}</td>
+            <td>${inr(total)}</td>
+          </tr>`;
+        }
         return `<tr class="item-row">
-          <td>${i + 1}</td>
-          <td>${h(it.cat) || '—'}</td>
-          <td class="left">${h(it.desc) || '—'}</td>
-          <td>${h(it.hsn) || '—'}</td>
-          <td>${h(it.pack) || '—'}</td>
-          <td>${inr(it.price)}</td>
-          <td>${it.qty}</td>
-          <td>${inr(total)}</td>
-          ${showGST ? `<td>${it.sgst ? `${it.sgst}%<span class="gst-amt">${inr(total * it.sgst / 100)}</span>` : ''}</td><td>${it.cgst ? `${it.cgst}%<span class="gst-amt">${inr(total * it.cgst / 100)}</span>` : ''}</td><td>${it.igst ? `${it.igst}%<span class="gst-amt">${inr(total * it.igst / 100)}</span>` : ''}</td>` : ''}
-        </tr>`;
+            <td rowspan="2">${i + 1}</td>
+            <td rowspan="2">${h(it.cat) || '—'}</td>
+            <td rowspan="2" class="left">${h(it.desc) || '—'}</td>
+            <td rowspan="2">${h(it.hsn) || '—'}</td>
+            <td rowspan="2">${h(it.pack) || '—'}</td>
+            <td rowspan="2">${inr(it.price)}</td>
+            <td rowspan="2">${it.qty}</td>
+            <td rowspan="2">${inr(total)}</td>
+            <td class="gst-pct">${it.sgst ? it.sgst + '%' : ''}</td>
+            <td class="gst-pct">${it.cgst ? it.cgst + '%' : ''}</td>
+            <td class="gst-pct">${it.igst ? it.igst + '%' : ''}</td>
+          </tr>
+          <tr class="item-row">
+            <td>${it.sgst ? inr(total * it.sgst / 100) : ''}</td>
+            <td>${it.cgst ? inr(total * it.cgst / 100) : ''}</td>
+            <td>${it.igst ? inr(total * it.igst / 100) : ''}</td>
+          </tr>`;
       });
 
       const tblHead = `<thead>
@@ -1612,7 +1642,11 @@
       const totH = mTotTbl.offsetHeight;
       const amtH = mWrap.querySelector('.amt-words').offsetHeight + 38; // margin 16px top + 22px bottom
       const p2HH = mWrap.querySelector('.p2-hdr').offsetHeight + 16;    // margin-bottom:16px
-      const rowH = Array.from(mWrap.querySelectorAll('.sqn-mr tr')).map(r => r.offsetHeight);
+      // Each GST item has 2 <tr> elements; combine pairs into a single per-item height.
+      const allTrH = Array.from(mWrap.querySelectorAll('.sqn-mr tr')).map(r => r.offsetHeight);
+      const rowH = showGST
+        ? allTrH.reduce((acc, h, i) => { i % 2 === 0 ? acc.push(h) : (acc[acc.length - 1] += h); return acc; }, [])
+        : allTrH;
       document.body.removeChild(mWrap);
 
       // ── PAGINATE based on measured heights ──
