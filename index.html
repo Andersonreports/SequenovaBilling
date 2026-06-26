@@ -789,10 +789,16 @@
 
     .it .item-row td.gst-pct {
       background: #f0f0f0 !important;
-      padding: 5px 7px;
-      font-size: 12px;
+      padding: 3px 4px;
+      font-size: 10px;
       font-weight: bold;
       color: #444;
+    }
+
+    .it .item-row td.gst-amt-cell {
+      font-size: 11px;
+      padding-left: 4px;
+      padding-right: 4px;
     }
 
     .ph {
@@ -1560,9 +1566,9 @@
             <td class="gst-pct">${it.igst}%</td>
           </tr>
           <tr class="item-row">
-            <td>${inr(total * it.sgst / 100)}</td>
-            <td>${inr(total * it.cgst / 100)}</td>
-            <td>${inr(total * it.igst / 100)}</td>
+            <td class="gst-amt-cell">${inr(total * it.sgst / 100)}</td>
+            <td class="gst-amt-cell">${inr(total * it.cgst / 100)}</td>
+            <td class="gst-amt-cell">${inr(total * it.igst / 100)}</td>
           </tr>`;
       });
 
@@ -1579,9 +1585,9 @@
             ${showGST ? '<th colspan="3">GST</th>' : ''}
           </tr>
           ${showGST ? `<tr>
-            <th style="width:6%">SGST</th>
-            <th style="width:6%">CGST</th>
-            <th style="width:6%">IGST</th>
+            <th style="width:5%">SGST</th>
+            <th style="width:5%">CGST</th>
+            <th style="width:5%">IGST</th>
           </tr>` : ''}
         </thead>`;
 
