@@ -6,9 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="format-detection" content="telephone=no,address=no,email=no">
   <title>Sequenova Bill</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Tinos:ital,wght@0,400;0,700;1,400;1,700&family=Carlito:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     *,
@@ -534,7 +531,7 @@
       max-width: 794px;
       min-height: 1123px;
       padding: 172px 40px 130px;
-      font-family: 'Tinos', 'Times New Roman', Times, serif;
+      font-family: 'Times New Roman', Georgia, 'Liberation Serif', Times, serif;
       font-size: 15px;
       line-height: 1.45;
       box-shadow: 0 12px 48px rgba(15, 40, 80, 0.28), 0 4px 12px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -822,13 +819,13 @@
       font-size: 15px;
       line-height: 1.75;
       margin-bottom: 22px;
-      font-family: 'Carlito', Calibri, 'Segoe UI', Arial, sans-serif;
+      font-family: Calibri, Arial, 'Liberation Sans', 'Segoe UI', sans-serif;
     }
 
     .terms-sec h3 {
       font-size: 24px;
       margin-bottom: 6px;
-      font-family: 'Carlito', Calibri, 'Segoe UI', Arial, sans-serif;
+      font-family: Calibri, Arial, 'Liberation Sans', 'Segoe UI', sans-serif;
       font-weight: bold;
     }
 
@@ -837,19 +834,19 @@
       line-height: 1.85;
       margin-bottom: 24px;
       font-weight: normal;
-      font-family: 'Carlito', Calibri, 'Segoe UI', Arial, sans-serif;
+      font-family: Calibri, Arial, 'Liberation Sans', 'Segoe UI', sans-serif;
     }
 
     .bank-sec h3 {
       font-size: 24px;
       margin-bottom: 6px;
-      font-family: 'Carlito', Calibri, 'Segoe UI', Arial, sans-serif;
+      font-family: Calibri, Arial, 'Liberation Sans', 'Segoe UI', sans-serif;
     }
 
     .bank-tbl {
       border-collapse: collapse;
       font-size: 15px;
-      font-family: 'Carlito', Calibri, 'Segoe UI', Arial, sans-serif;
+      font-family: Calibri, Arial, 'Liberation Sans', 'Segoe UI', sans-serif;
     }
 
     .bank-tbl td {
@@ -875,7 +872,7 @@
       font-size: 15px;
       line-height: 1.9;
       text-align: left;
-      font-family: 'Carlito', Calibri, 'Segoe UI', Arial, sans-serif;
+      font-family: Calibri, Arial, 'Liberation Sans', 'Segoe UI', sans-serif;
     }
 
     .ty {
@@ -1160,7 +1157,7 @@
           <label>Transport GST %</label>
           <input type="number" id="tGST" min="0" max="100" oninput="renderPreview()">
         </div>
-        <div class="fg">
+        <div class="fg" id="freightFieldWrap">
           <label>Freight (₹)</label>
           <input type="number" id="freight" min="0" oninput="renderPreview()">
         </div>
@@ -1475,6 +1472,7 @@
       const signatoryMobile = $v('signatoryMobile').trim();
       document.getElementById('mobileFieldWrap').style.display = isPurchase ? '' : 'none';
       document.getElementById('bankFieldsWrap').style.display = isPurchase ? '' : 'none';
+      document.getElementById('freightFieldWrap').style.display = isPurchase ? '' : 'none';
       const termsText = $v('termsText').trim();
       const termsPageClass = termsText.length > 260 ? ' compact-terms-page' : '';
 
@@ -1518,8 +1516,8 @@
       // For Purchase Orders, hide the GST columns/rows and the transportation
       // cost rows entirely when none of those values are actually set.
       const showGST = !isPurchase || items.some(it => Number(it.sgst) > 0 || Number(it.cgst) > 0 || Number(it.igst) > 0);
-      const showTransport = !isPurchase || tc > 0 || tgAmt > 0;
-      const showFreight = !isPurchase || freight > 0;
+      const showTransport = tc > 0;
+      const showFreight = isPurchase && freight > 0;
       const totalCols = 8 + (showGST ? 3 : 0);
 
       // Build all item row HTML
@@ -1534,7 +1532,7 @@
           <td>${inr(it.price)}</td>
           <td>${it.qty}</td>
           <td>${inr(total)}</td>
-          ${showGST ? `<td>${it.sgst}%<span class="gst-amt">${inr(total * it.sgst / 100)}</span></td><td>${it.cgst}%<span class="gst-amt">${inr(total * it.cgst / 100)}</span></td><td>${it.igst}%<span class="gst-amt">${inr(total * it.igst / 100)}</span></td>` : ''}
+          ${showGST ? `<td>${it.sgst ? `${it.sgst}%<span class="gst-amt">${inr(total * it.sgst / 100)}</span>` : ''}</td><td>${it.cgst ? `${it.cgst}%<span class="gst-amt">${inr(total * it.cgst / 100)}</span>` : ''}</td><td>${it.igst ? `${it.igst}%<span class="gst-amt">${inr(total * it.igst / 100)}</span>` : ''}</td>` : ''}
         </tr>`;
       });
 
@@ -1587,7 +1585,7 @@
       // Render actual elements into a hidden off-screen div using real CSS classes so
       // offsetHeight reflects true rendered heights (multi-line descriptions, full addresses, etc.)
       const mWrap = document.createElement('div');
-      mWrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:714px;visibility:hidden;pointer-events:none;font-family:"Tinos","Times New Roman",Times,serif;font-size:15px;line-height:1.45;color:#111;';
+      mWrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:714px;visibility:hidden;pointer-events:none;font-family:"Times New Roman",Georgia,"Liberation Serif",Times,serif;font-size:15px;line-height:1.45;color:#111;';
       mWrap.innerHTML = `
         <div class="dh"><div class="dh-row1"><div></div><div class="dh-title" style="${titleStyle}">${docTitle}</div><div class="dh-qno"><span class="lbl">${qnoLabel}</span><span class="val">${h(qno)}</span><span class="lbl">Date:</span><span class="val">${fmtD(qdate)}</span></div></div></div>
         <table class="addr-tbl">
@@ -1633,8 +1631,8 @@
 
       // For each page: only the LAST items page needs totals+amtWords overhead.
       // Mid pages (not the last) omit that overhead so more items fit.
-      // SAFETY: extra 30px buffer so measurement rounding never causes overflow.
-      const SAFETY = 30;
+      // SAFETY: small buffer for sub-pixel measurement rounding.
+      const SAFETY = 10;
       const p1LastBudget = AVAIL - dhH - addrH - thH - totH - amtH - SAFETY;
       const p1MidBudget = AVAIL - dhH - addrH - thH - SAFETY;
       const contLastBudget = AVAIL - p2HH - thH - totH - amtH - SAFETY;
@@ -1856,11 +1854,8 @@
         }).catch(fail);
       };
 
-      // The page text uses web fonts (Tinos/Carlito) loaded via Google Fonts.
-      // If html2canvas snapshots before the client's browser has finished
-      // downloading them, it rasterizes mid-swap and glyphs can overlap/garble —
-      // waiting for document.fonts.ready guarantees the same fonts are painted
-      // for every client regardless of network speed or installed system fonts.
+      // Wait for any custom fonts to finish loading before snapshotting,
+      // so html2canvas always rasterizes with fully-resolved font metrics.
       const fontsReady = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
       fontsReady.then(generate, generate);
     }
