@@ -1555,14 +1555,14 @@
             <td rowspan="2">${inr(it.price)}</td>
             <td rowspan="2">${it.qty}</td>
             <td rowspan="2">${inr(total)}</td>
-            <td class="gst-pct">${it.sgst ? it.sgst + '%' : ''}</td>
-            <td class="gst-pct">${it.cgst ? it.cgst + '%' : ''}</td>
-            <td class="gst-pct">${it.igst ? it.igst + '%' : ''}</td>
+            <td class="gst-pct">${it.sgst}%</td>
+            <td class="gst-pct">${it.cgst}%</td>
+            <td class="gst-pct">${it.igst}%</td>
           </tr>
           <tr class="item-row">
-            <td>${it.sgst ? inr(total * it.sgst / 100) : ''}</td>
-            <td>${it.cgst ? inr(total * it.cgst / 100) : ''}</td>
-            <td>${it.igst ? inr(total * it.igst / 100) : ''}</td>
+            <td>${inr(total * it.sgst / 100)}</td>
+            <td>${inr(total * it.cgst / 100)}</td>
+            <td>${inr(total * it.igst / 100)}</td>
           </tr>`;
       });
 
@@ -1579,9 +1579,9 @@
             ${showGST ? '<th colspan="3">GST</th>' : ''}
           </tr>
           ${showGST ? `<tr>
-            <th style="width:9%">SGST</th>
-            <th style="width:9%">CGST</th>
-            <th style="width:9%">IGST</th>
+            <th style="width:7%">SGST</th>
+            <th style="width:7%">CGST</th>
+            <th style="width:7%">IGST</th>
           </tr>` : ''}
         </thead>`;
 
