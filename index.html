@@ -724,6 +724,27 @@
       line-height: 2;
     }
 
+    .addr-tbl .ref-cell {
+      padding: 12px 8px;
+      font-size: 11.5px;
+    }
+
+    .ref-line {
+      margin: 0 0 7px 0 !important;
+    }
+
+    .ref-line strong {
+      display: block;
+      white-space: normal;
+      margin: 0 0 1px 0;
+    }
+
+    .ref-line span {
+      display: block;
+      overflow-wrap: break-word;
+      word-break: break-word;
+    }
+
     .bill-company {
       display: block;
       font-size: 13.4px;
@@ -1183,16 +1204,6 @@
             <input type="date" id="refQuoteDate" oninput="renderPreview()">
           </div>
         </div>
-        <div class="frow">
-          <div class="fg">
-            <label>Invoice No.</label>
-            <input type="text" id="refInvNo" placeholder="e.g. SN20260623038" oninput="renderPreview()">
-          </div>
-          <div class="fg">
-            <label>Invoice Date</label>
-            <input type="date" id="refInvDate" oninput="renderPreview()">
-          </div>
-        </div>
       </div>
 
       <div class="sec-title">Transportation</div>
@@ -1554,14 +1565,12 @@
         : `<span class="ph">Fill ${shipToLabel} in the left panel</span>`;
 
       // Reference Details (invoice only)
-      const rPoNo = $v('refPoNo'), rPoDate = $v('refPoDate'), rQNo = $v('refQuoteNo'), rQDate = $v('refQuoteDate'), rIDate = $v('refInvDate'), rINo = $v('refInvNo');
+      const rPoNo = $v('refPoNo'), rPoDate = $v('refPoDate'), rQNo = $v('refQuoteNo'), rQDate = $v('refQuoteDate');
       const refParts = [
-        rPoNo && `<div class="info-line"><strong>PO No.:</strong><span>${h(rPoNo)}</span></div>`,
-        rPoDate && `<div class="info-line"><strong>PO Date:</strong><span>${fmtD(rPoDate)}</span></div>`,
-        rQDate && `<div class="info-line"><strong>Quotation Date:</strong><span>${fmtD(rQDate)}</span></div>`,
-        rQNo && `<div class="info-line"><strong>Quotation No:</strong><span>${h(rQNo)}</span></div>`,
-        rIDate && `<div class="info-line"><strong>Invoice Date:</strong><span>${fmtD(rIDate)}</span></div>`,
-        rINo && `<div class="info-line"><strong>Invoice No:</strong><span>${h(rINo)}</span></div>`,
+        rPoNo && `<div class="info-line ref-line"><strong>PO No.:</strong><span>${h(rPoNo)}</span></div>`,
+        rPoDate && `<div class="info-line ref-line"><strong>PO Date:</strong><span>${fmtD(rPoDate)}</span></div>`,
+        rQNo && `<div class="info-line ref-line"><strong>Quotation No:</strong><span>${h(rQNo)}</span></div>`,
+        rQDate && `<div class="info-line ref-line"><strong>Quotation Date:</strong><span>${fmtD(rQDate)}</span></div>`,
       ].filter(Boolean);
       const refBlock = refParts.length
         ? refParts.join('')
@@ -1675,10 +1684,10 @@
         <div class="dh"><div class="dh-row1"><div></div><div class="dh-title" style="${titleStyle}">${docTitle}</div><div class="dh-qno"><span class="lbl">${qnoLabel}</span><span class="val">${h(qno)}</span><span class="lbl">Date:</span><span class="val">${fmtD(qdate)}</span></div></div></div>
         <table class="addr-tbl">
           <thead><tr>
-            <th style="width:${isInvoice ? '42%' : '50%'}">${billToLabel}</th><th style="width:${isInvoice ? '42%' : '50%'}">${shipToLabel}</th>${isInvoice ? '<th style="width:16%">Reference Details</th>' : ''}
+            <th style="width:${isInvoice ? '38%' : '50%'}">${billToLabel}</th><th style="width:${isInvoice ? '38%' : '50%'}">${shipToLabel}</th>${isInvoice ? '<th style="width:24%">Reference Details</th>' : ''}
           </tr></thead>
           <tbody><tr>
-            <td>${billBlock}</td><td>${shipBlock}</td>${isInvoice ? `<td>${refBlock}</td>` : ''}
+            <td>${billBlock}</td><td>${shipBlock}</td>${isInvoice ? `<td class="ref-cell">${refBlock}</td>` : ''}
           </tr></tbody>
         </table>
         <table class="it">${tblHead}<tbody class="sqn-mr">${allRows.join('')}</tbody></table>
@@ -1825,16 +1834,16 @@
       <table class="addr-tbl">
         <thead>
           <tr>
-            <th style="width:${isInvoice ? '42%' : '50%'}">${billToLabel}</th>
-            <th style="width:${isInvoice ? '42%' : '50%'}">${shipToLabel}</th>
-            ${isInvoice ? '<th style="width:16%">Reference Details</th>' : ''}
+            <th style="width:${isInvoice ? '38%' : '50%'}">${billToLabel}</th>
+            <th style="width:${isInvoice ? '38%' : '50%'}">${shipToLabel}</th>
+            ${isInvoice ? '<th style="width:24%">Reference Details</th>' : ''}
           </tr>
         </thead>
         <tbody>
           <tr>
             <td>${billBlock}</td>
             <td>${shipBlock}</td>
-            ${isInvoice ? `<td>${refBlock}</td>` : ''}
+            ${isInvoice ? `<td class="ref-cell">${refBlock}</td>` : ''}
           </tr>
         </tbody>
       </table>
