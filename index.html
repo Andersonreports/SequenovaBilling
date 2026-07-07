@@ -1689,7 +1689,7 @@
       const mWrap = document.createElement('div');
       mWrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:714px;visibility:hidden;pointer-events:none;font-family:"Times New Roman",Georgia,"Liberation Serif",Times,serif;font-size:15px;line-height:1.45;color:#111;';
       mWrap.innerHTML = `
-        <div class="dh"><div class="dh-row1"><div></div><div class="dh-title" style="${titleStyle}">${docTitle}</div><div class="dh-qno"><span class="lbl">${qnoLabel}</span><span class="val">${h(qno)}</span><span class="lbl">Date:</span><span class="val">${fmtD(qdate)}</span></div></div></div>
+        <div class="dh"><div class="dh-row1"><div></div><div class="dh-title" style="${titleStyle}">${docTitle}</div><div class="dh-qno">${isInvoice ? '' : `<span class="lbl">${qnoLabel}</span><span class="val">${h(qno)}</span><span class="lbl">Date:</span><span class="val">${fmtD(qdate)}</span>`}</div></div></div>
         <table class="addr-tbl">
           <thead><tr>
             <th style="width:${isInvoice ? '36%' : '50%'}">${billToLabel}</th><th style="width:${isInvoice ? '36%' : '50%'}">${shipToLabel}</th>${isInvoice ? '<th style="width:28%">Reference Details</th>' : ''}
@@ -1836,7 +1836,7 @@
         <div class="dh-row1">
           <div></div>
           <div class="dh-title" style="${titleStyle}">${docTitle}</div>
-          <div class="dh-qno"><span class="lbl">${qnoLabel}</span><span class="val">${h(qno)}</span><span class="lbl">Date:</span><span class="val">${fmtD(qdate)}</span></div>
+          <div class="dh-qno">${isInvoice ? '' : `<span class="lbl">${qnoLabel}</span><span class="val">${h(qno)}</span><span class="lbl">Date:</span><span class="val">${fmtD(qdate)}</span>`}</div>
         </div>
       </div>
       <table class="addr-tbl">
