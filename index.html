@@ -744,6 +744,10 @@
       white-space: nowrap;
     }
 
+    .ref-line.ref-gap {
+      margin-top: 16px !important;
+    }
+
     .bill-company {
       display: block;
       font-size: 13.4px;
@@ -1565,14 +1569,19 @@
 
       // Reference Details (invoice only)
       const rPoNo = $v('refPoNo'), rPoDate = $v('refPoDate'), rQNo = $v('refQuoteNo'), rQDate = $v('refQuoteDate');
+      const rawQNo = $v('qNo').trim(), rawQDate = $v('qDate');
       const refParts = [
         rPoNo && `<div class="info-line ref-line"><strong>PO No.:</strong><span>${h(rPoNo)}</span></div>`,
         rPoDate && `<div class="info-line ref-line"><strong>PO Date:</strong><span>${fmtD(rPoDate)}</span></div>`,
         rQNo && `<div class="info-line ref-line"><strong>Quotation No:</strong><span>${h(rQNo)}</span></div>`,
         rQDate && `<div class="info-line ref-line"><strong>Quotation Date:</strong><span>${fmtD(rQDate)}</span></div>`,
       ].filter(Boolean);
-      const refBlock = refParts.length
-        ? refParts.join('')
+      const invoiceRefParts = [
+        rawQNo && `<div class="info-line ref-line ref-gap"><strong>Invoice No:</strong><span>${h(rawQNo)}</span></div>`,
+        rawQDate && `<div class="info-line ref-line"><strong>Invoice Date:</strong><span>${fmtD(rawQDate)}</span></div>`,
+      ].filter(Boolean);
+      const refBlock = (refParts.length || invoiceRefParts.length)
+        ? refParts.join('') + invoiceRefParts.join('')
         : `<span class="ph">Fill Reference Details in the left panel</span>`;
 
       // Compute totals (per-item GST rates)
