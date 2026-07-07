@@ -1161,6 +1161,40 @@
         </div>
       </div>
 
+      <div id="refDetailsWrap" style="display:none">
+        <div class="sec-title">Reference Details</div>
+        <div class="frow">
+          <div class="fg">
+            <label>PO No.</label>
+            <input type="text" id="refPoNo" placeholder="e.g. PO/26-27/00002006" oninput="renderPreview()">
+          </div>
+          <div class="fg">
+            <label>PO Date</label>
+            <input type="date" id="refPoDate" oninput="renderPreview()">
+          </div>
+        </div>
+        <div class="frow">
+          <div class="fg">
+            <label>Quotation No.</label>
+            <input type="text" id="refQuoteNo" placeholder="e.g. SN20250908057" oninput="renderPreview()">
+          </div>
+          <div class="fg">
+            <label>Quotation Date</label>
+            <input type="date" id="refQuoteDate" oninput="renderPreview()">
+          </div>
+        </div>
+        <div class="frow">
+          <div class="fg">
+            <label>Invoice No.</label>
+            <input type="text" id="refInvNo" placeholder="e.g. SN20260623038" oninput="renderPreview()">
+          </div>
+          <div class="fg">
+            <label>Invoice Date</label>
+            <input type="date" id="refInvDate" oninput="renderPreview()">
+          </div>
+        </div>
+      </div>
+
       <div class="sec-title">Transportation</div>
       <div class="frow">
         <div class="fg">
@@ -1487,6 +1521,7 @@
       document.getElementById('mobileFieldWrap').style.display = isPurchase ? '' : 'none';
       document.getElementById('bankFieldsWrap').style.display = isPurchase ? '' : 'none';
       document.getElementById('freightFieldWrap').style.display = isPurchase ? '' : 'none';
+      document.getElementById('refDetailsWrap').style.display = isInvoice ? '' : 'none';
       const termsText = $v('termsText').trim();
       const termsPageClass = termsText.length > 260 ? ' compact-terms-page' : '';
 
@@ -1517,6 +1552,20 @@
       const shipBlock = shipParts.length
         ? shipParts.join('')
         : `<span class="ph">Fill ${shipToLabel} in the left panel</span>`;
+
+      // Reference Details (invoice only)
+      const rPoNo = $v('refPoNo'), rPoDate = $v('refPoDate'), rQNo = $v('refQuoteNo'), rQDate = $v('refQuoteDate'), rIDate = $v('refInvDate'), rINo = $v('refInvNo');
+      const refParts = [
+        rPoNo && `<div class="info-line"><strong>PO No.:</strong><span>${h(rPoNo)}</span></div>`,
+        rPoDate && `<div class="info-line"><strong>PO Date:</strong><span>${fmtD(rPoDate)}</span></div>`,
+        rQDate && `<div class="info-line"><strong>Quotation Date:</strong><span>${fmtD(rQDate)}</span></div>`,
+        rQNo && `<div class="info-line"><strong>Quotation No:</strong><span>${h(rQNo)}</span></div>`,
+        rIDate && `<div class="info-line"><strong>Invoice Date:</strong><span>${fmtD(rIDate)}</span></div>`,
+        rINo && `<div class="info-line"><strong>Invoice No:</strong><span>${h(rINo)}</span></div>`,
+      ].filter(Boolean);
+      const refBlock = refParts.length
+        ? refParts.join('')
+        : `<span class="ph">Fill Reference Details in the left panel</span>`;
 
       // Compute totals (per-item GST rates)
       let sub = 0, tSG = 0, tCG = 0, tIG = 0, totalQty = 0;
@@ -1626,10 +1675,10 @@
         <div class="dh"><div class="dh-row1"><div></div><div class="dh-title" style="${titleStyle}">${docTitle}</div><div class="dh-qno"><span class="lbl">${qnoLabel}</span><span class="val">${h(qno)}</span><span class="lbl">Date:</span><span class="val">${fmtD(qdate)}</span></div></div></div>
         <table class="addr-tbl">
           <thead><tr>
-            <th style="width:50%">${billToLabel}</th><th style="width:50%">${shipToLabel}</th>
+            <th style="width:${isInvoice ? '42%' : '50%'}">${billToLabel}</th><th style="width:${isInvoice ? '42%' : '50%'}">${shipToLabel}</th>${isInvoice ? '<th style="width:16%">Reference Details</th>' : ''}
           </tr></thead>
           <tbody><tr>
-            <td>${billBlock}</td><td>${shipBlock}</td>
+            <td>${billBlock}</td><td>${shipBlock}</td>${isInvoice ? `<td>${refBlock}</td>` : ''}
           </tr></tbody>
         </table>
         <table class="it">${tblHead}<tbody class="sqn-mr">${allRows.join('')}</tbody></table>
@@ -1776,14 +1825,16 @@
       <table class="addr-tbl">
         <thead>
           <tr>
-            <th style="width:50%">${billToLabel}</th>
-            <th style="width:50%">${shipToLabel}</th>
+            <th style="width:${isInvoice ? '42%' : '50%'}">${billToLabel}</th>
+            <th style="width:${isInvoice ? '42%' : '50%'}">${shipToLabel}</th>
+            ${isInvoice ? '<th style="width:16%">Reference Details</th>' : ''}
           </tr>
         </thead>
         <tbody>
           <tr>
             <td>${billBlock}</td>
             <td>${shipBlock}</td>
+            ${isInvoice ? `<td>${refBlock}</td>` : ''}
           </tr>
         </tbody>
       </table>
